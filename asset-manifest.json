@@ -1,0 +1,12 @@
+{
+  "files": {
+    "main.css": "/MaliaWakeshoAjwang/1914fund/static/css/main.31d6cfe0.css",
+    "main.js": "/MaliaWakeshoAjwang/1914fund/static/js/main.72d4a6ca.js",
+    "index.html": "/MaliaWakeshoAjwang/1914fund/index.html",
+    "main.72d4a6ca.js.map": "/MaliaWakeshoAjwang/1914fund/static/js/main.72d4a6ca.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.31d6cfe0.css",
+    "static/js/main.72d4a6ca.js"
+  ]
+}
