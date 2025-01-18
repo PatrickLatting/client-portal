@@ -1,15 +1,17 @@
 {
   "files": {
-    "main.css": "/1914fund/static/css/main.1bbcef3a.css",
-    "main.js": "/1914fund/static/js/main.89aa5683.js",
+    "main.css": "/1914fund/static/css/main.7045e462.css",
+    "main.js": "/1914fund/static/js/main.4329614f.js",
     "static/media/home.png": "/1914fund/static/media/home.228e83dbcbdb8e0b44d6.png",
+    "static/media/house.jpeg": "/1914fund/static/media/house.0bb37a3959d7ab8448d7.jpeg",
+    "static/media/stock1.png": "/1914fund/static/media/stock1.3e100133505640246e29.png",
     "static/media/1914Logo.png": "/1914fund/static/media/1914Logo.3f38888ee104fcfdc35b.png",
     "index.html": "/1914fund/index.html",
-    "main.1bbcef3a.css.map": "/1914fund/static/css/main.1bbcef3a.css.map",
-    "main.89aa5683.js.map": "/1914fund/static/js/main.89aa5683.js.map"
+    "main.7045e462.css.map": "/1914fund/static/css/main.7045e462.css.map",
+    "main.4329614f.js.map": "/1914fund/static/js/main.4329614f.js.map"
   },
   "entrypoints": [
-    "static/css/main.1bbcef3a.css",
-    "static/js/main.89aa5683.js"
+    "static/css/main.7045e462.css",
+    "static/js/main.4329614f.js"
   ]
 }
