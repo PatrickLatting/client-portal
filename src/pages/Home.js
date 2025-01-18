@@ -1,12 +1,20 @@
 import React from 'react';
 import styles from '../styles/Home.module.css';
+import image from '../assets/images/home.png';
 
 const Home = () => {
     return (
-        <div className={styles.home}>
-            <h1>Welcome to 1914 Fund</h1>
-            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed non felis lacus. In hac habitasse platea dictumst. Donec viverra, metus eget consectetur lobortis, mauris felis ullamcorper velit, at fermentum dui neque et nisi.</p>
-        </div>
+        <>
+            <div className={styles.landing}>
+                <div className={styles.text}>
+                    <h1>The most comprehensive foreclosure database in the world.</h1>
+                    <button></button>
+                </div>
+                <div>
+                    <img src={image} alt="Placeholder" />
+                </div>
+            </div>
+        </>
     )
 }
 

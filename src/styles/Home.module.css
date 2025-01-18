@@ -1,0 +1,7 @@
+.landing{
+    height: calc(100vh - var(--header-height));
+}
+
+.landing .text{
+    
+}

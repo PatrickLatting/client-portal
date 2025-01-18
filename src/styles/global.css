@@ -14,12 +14,26 @@
     --header-height: 4rem;
     box-sizing: border-box;
     --font: 'Inter', sans-serif;
+    font-family: var(--font);
+    padding: 0;
+    margin: 0;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
 }
 
 html, body {
     margin: 0;
     padding: 0;
     background-color: var(--white);
+}
+
+h1, h2, h3, h4, h5, h6 {
+    margin: 0;
+    padding: 0;
 }
 
 /* headings */
