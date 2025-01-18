@@ -1,11 +1,29 @@
 import React from 'react';
+import styles from "../styles/ForgotPassword.module.css";
+import Logo from "../assets/logos/1914Logo.png";
 
 const ForgotPassword = () => {
     return (
-        <div>
-            <h1>Welcome to 1914 Fund</h1>
-            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed non felis lacus. In hac habitasse platea dictumst. Donec viverra, metus eget consectetur lobortis, mauris felis ullamcorper velit, at fermentum dui neque et nisi.</p>
-        </div>
+        <>
+            <div className={styles.landing}>
+                <div className={styles.login}>
+                    <div className={styles.rectangle}>
+                        <div className={styles.formheader}>
+                            <div className={styles.logo}>
+                                <img src={Logo} alt="Logo" />
+                            </div>
+                            <h1>Forgot password</h1>
+                        </div>
+                        <div className={styles.form}>
+                            <input type="email" id="email" name="email" placeholder='Your email' required />
+                            <button type='submit'>
+                                Recover password
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </>
     )
 }
 

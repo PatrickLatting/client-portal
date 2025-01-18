@@ -1,6 +1,7 @@
 import React from 'react';
 import styles from '../styles/SignIn.module.css';
 import Logo from "../assets/logos/1914Logo.png";
+import { Link } from "react-router-dom";
 
 
 const SignIn = () => {
@@ -16,9 +17,9 @@ const SignIn = () => {
                     </div>
                     <div className={styles.form}>
                         <div className={styles.inputs}>
-                            <label htmlFor="username">Email</label>
+                            <label htmlFor="email">Email</label>
                             <div className={styles.input}>
-                                <input type="text" id="username" name="username" required />
+                                <input type="text" id="email" name="email" required />
                             </div>
                         </div>
                         <div className={styles.inputs}>
@@ -31,12 +32,12 @@ const SignIn = () => {
                         <button type='submit'>
                             Sign In
                         </button>
-                        <a href='./sign-up'>
+                        <Link to="/sign-up">
                             Sign Up
-                        </a>
-                        <a href='./reset-password/:token'>
+                        </Link>
+                        <Link to="/forgot-password">
                             Forgot your password?
-                        </a>
+                        </Link>
                     </div>
                 </div>
             </div>

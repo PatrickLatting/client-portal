@@ -68,3 +68,21 @@
     font-size: 1rem;
     text-decoration: none;
 }
+
+.welcomebanner{
+    background-color: var(--darkblue);
+    padding: 2rem 3rem 0.74rem;
+}
+
+.welcomebanner h1{
+    color: white;
+}
+
+.databaseHeader{
+    padding: 2rem 3rem 0.74rem;
+    text-align: center;
+}
+
+.databaseHeader p{
+    padding: 0 3rem;
+}
