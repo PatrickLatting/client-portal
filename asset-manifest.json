@@ -1,12 +1,14 @@
 {
   "files": {
-    "main.css": "/MaliaWakeshoAjwang/1914fund/static/css/main.31d6cfe0.css",
-    "main.js": "/MaliaWakeshoAjwang/1914fund/static/js/main.72d4a6ca.js",
+    "main.css": "/MaliaWakeshoAjwang/1914fund/static/css/main.13a66277.css",
+    "main.js": "/MaliaWakeshoAjwang/1914fund/static/js/main.893b39de.js",
+    "static/media/1914Logo.png": "/MaliaWakeshoAjwang/1914fund/static/media/1914Logo.3f38888ee104fcfdc35b.png",
     "index.html": "/MaliaWakeshoAjwang/1914fund/index.html",
-    "main.72d4a6ca.js.map": "/MaliaWakeshoAjwang/1914fund/static/js/main.72d4a6ca.js.map"
+    "main.13a66277.css.map": "/MaliaWakeshoAjwang/1914fund/static/css/main.13a66277.css.map",
+    "main.893b39de.js.map": "/MaliaWakeshoAjwang/1914fund/static/js/main.893b39de.js.map"
   },
   "entrypoints": [
-    "static/css/main.31d6cfe0.css",
-    "static/js/main.72d4a6ca.js"
+    "static/css/main.13a66277.css",
+    "static/js/main.893b39de.js"
   ]
 }
