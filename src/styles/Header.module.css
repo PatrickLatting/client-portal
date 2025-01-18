@@ -65,6 +65,11 @@ nav a {
   transform: rotate(-45deg) translate(5px, -5px);
 }
 
+.close{
+  display: none;
+}
+
+
 /* Responsive Design */
 /* Tablet and Mobile */
 @media screen and (max-width: 768px) {
@@ -114,9 +119,5 @@ nav a {
     font-weight: bold;
     color: var(--darkgrey); /* Use the same color as the menu links */
     cursor: pointer;
-  }
-
-  .close{
-    display: none;
   }
 }

@@ -8,7 +8,8 @@
     --black: #000000;
     --white: #ffffff;
     --darkgrey: #424242;
-    --lightgrey: #616161;
+    --grey: #616161;
+    --lightgrey: #f7f7f7;
     --links: #007bff;
     font-size: 16px;
     --header-height: 4rem;
@@ -72,4 +73,28 @@ h1 {
     h1{
         text-align: center;
     }
+}
+
+button {
+    display: flex;
+    width: 100%;
+    color: var(--white);
+    background-color: var(--darkblue);
+    font-weight: 0.875rem;
+    margin: 0.5rem 0 1.25rem;
+    justify-content: center;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    box-shadow: rgba(17, 17, 17, 0.04) 0px 2px 4px 0px, rgba(33, 33, 33, 0.08) 0px 8px 32px 0px;
+    border: none;
+}
+
+.subtitle {
+    font-family: "Arial", sans-serif; /* Use Arial or any other clean font */
+    font-size: 1.25rem; /* Adjust to make it appropriately sized */
+    font-weight: normal; /* Normal weight for a clean look */
+    color: #000; /* Black text */
+    text-align: center; /* Center-align the subtitle */
+    margin: 1rem 0; /* Add spacing above and below */
 }

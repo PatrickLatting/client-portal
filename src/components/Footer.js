@@ -1,12 +1,14 @@
 import React from "react";
-// import styles from "../styles/Footer.module.css"
+import styles from "../styles/Footer.module.css"
 
 const Footer = () => {
   return (
     <footer>
-      <div className="footer-container">
-        <p>&copy; {new Date().getFullYear()} Your Company Name. All Rights Reserved.</p>
-        <ul className="footer-links">
+      <div className={styles.copyright}>
+        <p>&copy; {new Date().getFullYear()} 1914 Fund. All Rights Reserved.</p>
+      </div>
+      <div className={styles.footerLinks}>
+        <ul>
           <li>
             <a href="/privacy-policy">Privacy Policy</a>
           </li>
