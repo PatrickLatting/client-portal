@@ -1,12 +1,16 @@
 import { Outlet } from "react-router-dom";
 import Navbar from "./Navbar";
 import axios from "axios";
-import { useEffect } from "react";
-import Footer from "./Footer";
+import { useEffect, useState } from "react";
 import { useUser } from "../hooks/useUser";
+import { Loader2 } from "lucide-react";
+import ForeclosureSkeleton from "./ForeclosureSkeleton";
 
 const AppTemplate = () => {
   const { setUser, setLoggedIn } = useUser();
+
+  // Step 1: Create a loading state
+  const [loading, setLoading] = useState(true);
 
   const fetchUser = async () => {
     try {
@@ -18,6 +22,8 @@ const AppTemplate = () => {
       setLoggedIn(true);
     } catch (err) {
       console.log("==>", err);
+    } finally {
+      setLoading(false); // Set loading to false once the request finishes
     }
   };
 
@@ -27,9 +33,16 @@ const AppTemplate = () => {
 
   return (
     <div>
-      <Navbar />
-      <Outlet />
-      {/* <Footer /> */}
+      {loading ? (
+        <div className="flex justify-center w-full items-center h-screen">
+          <ForeclosureSkeleton />
+        </div>
+      ) : (
+        <>
+          <Navbar />
+          <Outlet />
+        </>
+      )}
     </div>
   );
 };

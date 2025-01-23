@@ -2,6 +2,7 @@ import express, { Express } from "express";
 import authRouter from "./routes/auth";
 import connectDB from "./config/database";
 import profileRouter from "./routes/profile";
+import propertiesRouter from "./routes/properties";
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 
@@ -20,6 +21,7 @@ app.use(cookieParser());
 
 app.use("/", authRouter);
 app.use("/", profileRouter);
+app.use("/", propertiesRouter);
 
 (async () => {
   try {

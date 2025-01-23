@@ -115,3 +115,24 @@
     @apply bg-background text-foreground;
   }
 }
+
+
+/* Webkit browsers */
+::-webkit-scrollbar {
+  width: 5px;
+ }
+ 
+ ::-webkit-scrollbar-track {
+  border-radius: 10px;
+ }
+ 
+ ::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 10px;
+ }
+ 
+ /* Firefox */
+ * {
+  scrollbar-width: thin;
+  scrollbar-color: #888 transparent;
+ }

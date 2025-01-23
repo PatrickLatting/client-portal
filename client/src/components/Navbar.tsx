@@ -104,11 +104,25 @@ export default function Component() {
                 About
               </Link>
               {loggedIn ? (
-                <LogoutButton />
+                <>
+                  <div className="flex w-full items-center py-2 text-lg font-semibold">
+                    Search
+                  </div>
+                  <div className="flex w-full items-center py-2 text-lg font-semibold">
+                    My Properties
+                  </div>
+                  <div className="flex w-full items-center py-2 text-lg font-semibold">
+                    Order History
+                  </div>
+                  <div className="flex w-full items-center py-2 text-lg font-semibold">
+                    State Law
+                  </div>
+                  <LogoutButton />
+                </>
               ) : (
                 <Link
                   to="/login"
-                  className="group inline-flex h-9 w-max items-center justify-center"
+                  className="flex w-full items-center py-2 text-lg font-semibold"
                   onClick={() => setIsSheetOpen(false)} // Close the sheet on click
                 >
                   Client Login
@@ -142,20 +156,34 @@ export default function Component() {
           About
         </Link>
         {loggedIn ? (
-          <DropdownMenu>
-            <DropdownMenuTrigger>
-              <Avatar>
-                <AvatarFallback>{user?.name.match(/\w/)}</AvatarFallback>
-              </Avatar>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => setIsAlertOpen(true)}>
-                Logout
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <>
+            <div className="group inline-flex h-9 w-max items-center justify-center">
+              Search
+            </div>
+            <div className="group inline-flex h-9 w-max items-center justify-center">
+              My Properties
+            </div>
+            <div className="group inline-flex h-9 w-max items-center justify-center">
+              Order History
+            </div>
+            <div className="group inline-flex h-9 w-max items-center justify-center">
+              State Law
+            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger>
+                <Avatar>
+                  <AvatarFallback>{user?.name.match(/\w/)}</AvatarFallback>
+                </Avatar>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setIsAlertOpen(true)}>
+                  Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </>
         ) : (
           <Link
             to="/login"

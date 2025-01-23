@@ -1,33 +1,42 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { LoginForm } from "../components/LoginForm";
 import { useNavigate } from "react-router-dom";
 import backgroundImage from "../assets/house.jpeg";
 import { useUser } from "../hooks/useUser";
+import { Loader2 } from "lucide-react";
 
 const LoginPage = () => {
   const { loggedIn } = useUser();
   const navigate = useNavigate();
+  const [loading, setLoading] = useState<false>(true);
 
   useEffect(() => {
     if (loggedIn) {
       navigate("/");
+      setTimeout(() => setLoading(false), 2000);
+    } else {
+      setLoading(false);
     }
-  });
+  }, []);
+
+  if (loading) {
+    return <Loader2 className="animate-spin" />;
+  }
 
   return (
     <div
       className="min-h-svh w-full"
       style={{
         backgroundImage: `url(${backgroundImage})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-        imageRendering: '-webkit-optimize-contrast', // For Chrome/Safari
-        WebkitBackfaceVisibility: 'hidden', // Prevents blurry edges during transforms
-        MozBackfaceVisibility: 'hidden',
-        backfaceVisibility: 'hidden',
-        transform: 'translateZ(0)', // Forces GPU acceleration
-        willChange: 'transform' // Hints browser to optimize for transforms
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+        imageRendering: "-webkit-optimize-contrast",
+        WebkitBackfaceVisibility: "hidden",
+        MozBackfaceVisibility: "hidden",
+        backfaceVisibility: "hidden",
+        transform: "translateZ(0)",
+        willChange: "transform",
       }}
     >
       <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10 ">

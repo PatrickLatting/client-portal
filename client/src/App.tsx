@@ -10,6 +10,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import { ToastProvider } from "./components/ui/toast";
 import { Toaster } from "./components/ui/toaster";
+import PropertyDetailsPage from "./pages/PropertyDetailsPage";
 
 interface User {
   _id: string;
@@ -56,6 +57,10 @@ function App() {
               <Route
                 path="/reset-password/:resetToken"
                 element={<ResetPassword />}
+              />
+              <Route
+                path="/property-details/:propertyId"
+                element={<PropertyDetailsPage />}
               />
             </Route>
           </Routes>
