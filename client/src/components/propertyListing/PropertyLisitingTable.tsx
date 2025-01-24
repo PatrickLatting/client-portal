@@ -1,67 +1,66 @@
-import React from "react";
-import "tailwindcss/tailwind.css";
+'use client';
 
-interface PropertyData {
+import React from 'react';
+import { AgGridReact } from 'ag-grid-react';
+import { ColDef, ModuleRegistry, AllCommunityModule, ValueFormatterParams } from 'ag-grid-community';
+
+ModuleRegistry.registerModules([AllCommunityModule]);
+
+interface GridData {
   [key: string]: string | number | boolean | null | undefined;
 }
 
-const PropertyListingTable: React.FC<{ data: PropertyData[] }> = ({ data }) => {
-  if (data.length === 0) {
-    return <p className="text-gray-500 text-center">No data available</p>;
-  }
+interface DynamicGridProps {
+  data: GridData[];
+}
 
-  const headers = Array.from(
-    new Set(data.flatMap((item) => Object.keys(item)))
-  ).filter((header) => header !== "_id");
+const PropertyListingTable: React.FC<DynamicGridProps> = ({ data }) => {
+  const generateColDefs = (data: GridData[]): ColDef[] => {
+    if (data.length === 0) return [];
 
-  const getColumnClass = (header: string) => {
-    if (header === "Notice Identification") {
-      return "px-6 border text-left text-sm font-medium text-gray-500 uppercase tracking-wider max-w-48";
-    }
-    return "px-6 border text-left text-sm font-medium text-gray-500 uppercase tracking-wider";
+    const headers = Array.from(
+      new Set(data.flatMap(item => Object.keys(item)))
+    ).filter(header => header !== '_id');
+
+    return headers.map(header => ({
+      field: header,
+      headerName: header,
+      flex: 1,
+      minWidth: header === 'ADDRESS_FROM_INPUT' || header === 'ASSESSED_IMPROVEMENT_VALUE' ? 350 : 200,
+      valueFormatter: (params: ValueFormatterParams) => {
+        if (params.value === null || params.value === undefined) return '-';
+        if (typeof params.value === 'boolean') {
+          return params.value.toString();
+        }
+        return params.value.toString();
+      }
+    }));
   };
 
-  return (
-    <div className="w-full max-w-full overflow-x-auto">
-      <div className="overflow-y-auto rounded-xl border">
-        <table className="min-w-full bg-white rounded-3xl">
-          <thead>
-            <tr className="bg-gray-100">
-              {headers.map((header) => (
-                <th key={header} className={getColumnClass(header)}>
-                  {header}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {data ? (
-              data.map((row, rowIndex) => (
-                <tr key={rowIndex} className="border border-gray-200">
-                  {headers.map((header) => (
-                    <td
-                      key={header}
-                      className={`px-4 py-2 border text-gray-600 truncate ${
-                        header === "Notice Identification" ||
-                        header === "Notice Content" ||
-                        header === "Parcel Number"
-                          ? "max-w-md "
-                          : ""
-                      }`}
-                    >
-                      {row[header] !== undefined && row[header] !== null
-                        ? row[header].toString()
-                        : "-"}
-                    </td>
-                  ))}
-                </tr>
-              ))
-            ) : (
-              <h2>No Data Available</h2>
-            )}
-          </tbody>
-        </table>
+  const defaultColDef: ColDef = {
+    sortable: true,
+    filter: false,
+    resizable: true,
+    minWidth: 220
+  };
+
+  if (!data?.length) {
+    return (
+      <div className="w-full h-64 flex items-center justify-center">
+        <p className="text-gray-500">No data available</p>
       </div>
+    );
+  }
+
+  return (
+    <div className="w-full  h-[76vh] bg-white rounded-xl border">
+      <AgGridReact
+        rowData={data}
+        columnDefs={generateColDefs(data)}
+        defaultColDef={defaultColDef}
+       
+        className="w-full rounded-xl ag-theme-alpine"
+      />
     </div>
   );
 };
