@@ -1,8 +1,15 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { AgGridReact } from 'ag-grid-react';
-import { ColDef, ModuleRegistry, AllCommunityModule, ValueFormatterParams } from 'ag-grid-community';
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import { AgGridReact } from "ag-grid-react";
+import {
+  ColDef,
+  ModuleRegistry,
+  AllCommunityModule,
+  ValueFormatterParams,
+  RowClickedEvent
+} from "ag-grid-community";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
@@ -15,25 +22,31 @@ interface DynamicGridProps {
 }
 
 const PropertyListingTable: React.FC<DynamicGridProps> = ({ data }) => {
+  const navigate = useNavigate();
+
   const generateColDefs = (data: GridData[]): ColDef[] => {
     if (data.length === 0) return [];
 
     const headers = Array.from(
-      new Set(data.flatMap(item => Object.keys(item)))
-    ).filter(header => header !== '_id');
+      new Set(data.flatMap((item) => Object.keys(item)))
+    ).filter((header) => header !== "_id");
 
-    return headers.map(header => ({
+    return headers.map((header) => ({
       field: header,
       headerName: header,
       flex: 1,
-      minWidth: header === 'ADDRESS_FROM_INPUT' || header === 'ASSESSED_IMPROVEMENT_VALUE' ? 350 : 200,
+      minWidth:
+        header === "ADDRESS_FROM_INPUT" ||
+        header === "ASSESSED_IMPROVEMENT_VALUE"
+          ? 350
+          : 200,
       valueFormatter: (params: ValueFormatterParams) => {
-        if (params.value === null || params.value === undefined) return '-';
-        if (typeof params.value === 'boolean') {
+        if (params.value === null || params.value === undefined) return "-";
+        if (typeof params.value === "boolean") {
           return params.value.toString();
         }
         return params.value.toString();
-      }
+      },
     }));
   };
 
@@ -41,7 +54,16 @@ const PropertyListingTable: React.FC<DynamicGridProps> = ({ data }) => {
     sortable: true,
     filter: false,
     resizable: true,
-    minWidth: 220
+    minWidth: 220,
+  };
+
+  const handleRowClick = (event: RowClickedEvent<GridData>) => {
+    const rowData = event.data?.ID;
+    console.log("Row clicked:", rowData);
+    if (rowData) {
+     
+      navigate(`/property-detail/${rowData}`);
+    }
   };
 
   if (!data?.length) {
@@ -53,13 +75,13 @@ const PropertyListingTable: React.FC<DynamicGridProps> = ({ data }) => {
   }
 
   return (
-    <div className="w-full  h-[76vh] bg-white rounded-xl border">
+    <div className="w-full h-[76vh] bg-white rounded-xl border">
       <AgGridReact
         rowData={data}
         columnDefs={generateColDefs(data)}
         defaultColDef={defaultColDef}
-       
         className="w-full rounded-xl ag-theme-alpine"
+        onRowClicked={handleRowClick}
       />
     </div>
   );
