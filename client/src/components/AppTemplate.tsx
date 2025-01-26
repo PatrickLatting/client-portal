@@ -3,13 +3,11 @@ import Navbar from "./Navbar";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { useUser } from "../hooks/useUser";
-import { Loader2 } from "lucide-react";
 import ForeclosureSkeleton from "./ForeclosureSkeleton";
 
 const AppTemplate = () => {
   const { setUser, setLoggedIn } = useUser();
 
-  // Step 1: Create a loading state
   const [loading, setLoading] = useState(true);
 
   const fetchUser = async () => {
@@ -21,9 +19,13 @@ const AppTemplate = () => {
       setUser(res.data);
       setLoggedIn(true);
     } catch (err) {
-      console.log("==>", err);
+      if (err instanceof Error) {
+        console.error(err.message);
+      } else {
+        console.error("An unknown error occurred");
+      }
     } finally {
-      setLoading(false); // Set loading to false once the request finishes
+      setLoading(false);
     }
   };
 

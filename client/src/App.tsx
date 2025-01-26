@@ -2,42 +2,33 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import AppTemplate from "./components/AppTemplate";
 import LoginPage from "./pages/LoginPage";
 import HomePage from "./pages/HomePage";
-import { createContext, useState } from "react";
+import { createContext, lazy, Suspense, useState } from "react";
 import PropertyListingPage from "./pages/PropertyListingPage";
 import SignupPage from "./pages/SignupPage";
 import AboutPage from "./pages/AboutPage";
-import ForgotPassword from "./pages/ForgotPassword";
-import ResetPassword from "./pages/ResetPassword";
 import { ToastProvider } from "./components/ui/toast";
 import { Toaster } from "./components/ui/toaster";
-import PropertyDetailsPage from "./pages/PropertyDetailsPage";
-
-interface User {
-  _id: string;
-  name: string;
-  emailId: string;
-  password: string;
-  organization: string;
-  occupation: string;
-  other: string;
-  howDidYouHearAboutUs: string;
-  createdAt: string;
-  updatedAt: string;
-  __v: number;
-}
+const PropertyDetailsPage = lazy(() => import("./pages/PropertyDetailsPage"));
+const SavedPropertiesPage = lazy(() => import("./pages/SavedPropertiesPage"));
+const OrderHistory = lazy(() => import("./pages/OrderHistory"));
+import { IUser } from "./types/user";
+import StateLawPage from "./pages/StateLawPage";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
+import ForeclosureSkeleton from "./components/ForeclosureSkeleton";
 
 interface UserContextType {
   loggedIn: boolean;
   setLoggedIn: React.Dispatch<React.SetStateAction<boolean>>;
-  user: User | null;
-  setUser: React.Dispatch<React.SetStateAction<User | null>>;
+  user: IUser | null;
+  setUser: React.Dispatch<React.SetStateAction<IUser | null>>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 function App() {
   const [loggedIn, setLoggedIn] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<IUser | null>(null);
 
   return (
     <UserContext.Provider value={{ loggedIn, setLoggedIn, user, setUser }}>
@@ -47,7 +38,7 @@ function App() {
           <Routes>
             <Route path="/" element={<AppTemplate />}>
               <Route
-                path="/"
+                index
                 element={loggedIn ? <PropertyListingPage /> : <HomePage />}
               />
               <Route path="/login" element={<LoginPage />} />
@@ -59,8 +50,60 @@ function App() {
                 element={<ResetPassword />}
               />
               <Route
-                path="/property-details/:propertyId"
-                element={<PropertyDetailsPage />}
+                path="/property-details/:propId"
+                element={
+                  <Suspense
+                    fallback={
+                      <div className="flex justify-center w-full items-center h-screen">
+                        <ForeclosureSkeleton />
+                      </div>
+                    }
+                  >
+                    <PropertyDetailsPage />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="/my-properties"
+                element={
+                  <Suspense
+                    fallback={
+                      <div className="flex justify-center w-full items-center h-screen">
+                        <ForeclosureSkeleton />
+                      </div>
+                    }
+                  >
+                    <SavedPropertiesPage />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="/order-history"
+                element={
+                  <Suspense
+                    fallback={
+                      <div className="flex justify-center w-full items-center h-screen">
+                        <ForeclosureSkeleton />
+                      </div>
+                    }
+                  >
+                    <OrderHistory />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="/state-laws"
+                element={
+                  <Suspense
+                    fallback={
+                      <div className="flex justify-center w-full items-center h-screen">
+                        <ForeclosureSkeleton />
+                      </div>
+                    }
+                  >
+                    <StateLawPage />
+                  </Suspense>
+                }
               />
             </Route>
           </Routes>

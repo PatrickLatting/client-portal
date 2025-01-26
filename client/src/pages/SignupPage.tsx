@@ -1,11 +1,11 @@
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import SignupForm from "../components/SignupForm";
-import { UserContext } from "../App";
 import { useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
+import { useUser } from "../hooks/useUser";
 
 const SignupPage = () => {
-  const { loggedIn } = useContext(UserContext);
+  const { loggedIn } = useUser();
   const [loading, setLoading] = useState(true);
 
   const navigate = useNavigate();

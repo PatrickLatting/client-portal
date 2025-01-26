@@ -11,6 +11,9 @@
 ```bash
 cd client-portal/client
 ```
+  ### .env file
+
+  Copy the .env.example file and rename it to .env for both client and server, then update the necessary environment variables with your own values.
 
 2. Install dependencies:
 ```bash

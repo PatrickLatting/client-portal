@@ -8,7 +8,7 @@ import { Loader2 } from "lucide-react";
 const LoginPage = () => {
   const { loggedIn } = useUser();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState<false>(true);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     if (loggedIn) {

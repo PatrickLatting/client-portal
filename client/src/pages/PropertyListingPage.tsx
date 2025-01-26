@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
-import MultiSelector from "../components/propertyListing/MultiSelect";
-import * as XLSX from "xlsx";
-import Papa from "papaparse";
+
+const MultiSelector = lazy(
+  () => import("../components/propertyListing/MultiSelect")
+);
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,12 +12,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../components/ui/dropdown-menu";
-import PropertyListingTable from "../components/propertyListing/PropertyLisitingTable";
+const PropertyListingTable = lazy(
+  () => import("../components/propertyListing/PropertyLisitingTable")
+);
 import { useUser } from "../hooks/useUser";
 import axios from "axios";
 import PaginationControls from "../components/propertyListing/PaginationControls";
-import { TableSkeleton } from "../components/ui/skeleton";
-
+import { TableSkeleton } from "../components/ui/tableSkeleton";
+import { PropertyDetails } from "../types/propertyTypes";
+import { downloadFile } from "../utils/downloadFiles";
+import { Skeleton } from "../components/ui/skeleton";
 
 const PropertyListingPage = () => {
   const [searchInput, setSearchInput] = useState("");
@@ -43,17 +48,8 @@ const PropertyListingPage = () => {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [properties, setProperties] = useState<Property[]>([]);
+  const [properties, setProperties] = useState<PropertyDetails[]>([]);
   const [loading, setLoading] = useState(false);
-
-  interface Property {
-    ADDRESS_FROM_INPUT: string;
-    ID: number;
-    ASSESSED_VALUE: number;
-    County: string;
-    Address: string;
-    [key: string]: any;
-  }
 
   const fetchProperties = async (
     search: string,
@@ -75,7 +71,7 @@ const PropertyListingPage = () => {
       });
 
       const res = await axios.get(
-        `http://localhost:8080/get-properties?${queryParams}`
+        `${import.meta.env.VITE_API_BASE_URL}/get-properties?${queryParams}`
       );
 
       setProperties(res.data.data);
@@ -168,41 +164,6 @@ const PropertyListingPage = () => {
     setSelectedPropertyType(selectedValues);
   };
 
-  const downloadCSV = () => {
-    if (properties.length === 0) {
-      alert("No data available to download.");
-      return;
-    }
-
-    const header = Object.keys(properties[0]);
-    const csv = Papa.unparse({
-      fields: header,
-      data: properties,
-    });
-
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-
-    link.setAttribute("href", url);
-    link.setAttribute("download", "filtered_properties.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  const downloadXLS = () => {
-    if (properties.length === 0) {
-      alert("No data available to download.");
-      return;
-    }
-
-    const worksheet = XLSX.utils.json_to_sheet(properties);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Filtered_Properties");
-    XLSX.writeFile(workbook, "filtered_properties.xlsx");
-  };
-
   return (
     <>
       <div className="flex w-full md:justify-start justify-center bg-gray-800 text-white py-10">
@@ -236,47 +197,65 @@ const PropertyListingPage = () => {
               </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem onClick={downloadCSV}>.CSV</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => downloadFile(properties, "CSV")}>
+                .CSV
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={downloadXLS}>.XLS</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => downloadFile(properties, "XLS")}>
+                .XLS
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
         <div className="my-10 flex flex-wrap lg:flex-nowrap justify-between gap-6">
           <div className="w-full lg:w-1/5 space-y-6">
-            <MultiSelector
-              options={allCounties}
-              placeholder="Select County"
-              onChange={handleCountyChange}
-              buttonWidth="w-full"
-            />
-            <MultiSelector
-              options={allStates}
-              placeholder="Select State"
-              onChange={handleStateChange}
-              buttonWidth="w-full"
-            />
-            <MultiSelector
-              options={allPropertyTypes}
-              placeholder="Select Property Type"
-              onChange={handlePropertyTypeChange}
-              buttonWidth="w-full"
-            />
-            <MultiSelector
-              options={allOwnerTypes}
-              placeholder="Select Owner Type"
-              onChange={handleOwnerTypeChange}
-              buttonWidth="w-full"
-            />
+            <Suspense fallback={<Skeleton className="h-12" />}>
+              <MultiSelector
+                options={allCounties}
+                placeholder="Select County"
+                onChange={handleCountyChange}
+                buttonWidth="w-full"
+              />
+            </Suspense>
+            <Suspense fallback={<Skeleton className="h-12" />}>
+              <MultiSelector
+                options={allStates}
+                placeholder="Select State"
+                onChange={handleStateChange}
+                buttonWidth="w-full"
+              />
+            </Suspense>
+            <Suspense fallback={<Skeleton className="h-12" />}>
+              <MultiSelector
+                options={allPropertyTypes}
+                placeholder="Select Property Type"
+                onChange={handlePropertyTypeChange}
+                buttonWidth="w-full"
+              />
+            </Suspense>
+            <Suspense fallback={<Skeleton className="h-12" />}>
+              <MultiSelector
+                options={allOwnerTypes}
+                placeholder="Select Owner Type"
+                onChange={handleOwnerTypeChange}
+                buttonWidth="w-full"
+              />
+            </Suspense>
           </div>
           <div className="w-full lg:w-3/4">
             {loading ? (
               <div>
-              <TableSkeleton rows={15} columns={4} className="my-4" />
+                <TableSkeleton rows={15} columns={4} className="my-4" />
               </div>
             ) : properties.length > 0 ? (
               <>
-                <PropertyListingTable data={properties} />
+                <Suspense
+                  fallback={
+                    <TableSkeleton rows={15} columns={4} className="my-4" />
+                  }
+                >
+                  <PropertyListingTable data={properties} />
+                </Suspense>
                 <PaginationControls
                   currentPage={currentPage}
                   totalPages={totalPages}

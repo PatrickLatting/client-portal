@@ -1,5 +1,3 @@
-"use client";
-
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { AgGridReact } from "ag-grid-react";
@@ -8,8 +6,9 @@ import {
   ModuleRegistry,
   AllCommunityModule,
   ValueFormatterParams,
-  RowClickedEvent
+  RowClickedEvent,
 } from "ag-grid-community";
+import { PropertyDetails } from "../../types/propertyTypes";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
@@ -18,13 +17,13 @@ interface GridData {
 }
 
 interface DynamicGridProps {
-  data: GridData[];
+  data: PropertyDetails[];
 }
 
 const PropertyListingTable: React.FC<DynamicGridProps> = ({ data }) => {
   const navigate = useNavigate();
 
-  const generateColDefs = (data: GridData[]): ColDef[] => {
+  const generateColDefs = (data: PropertyDetails[]): ColDef[] => {
     if (data.length === 0) return [];
 
     const headers = Array.from(
@@ -61,8 +60,7 @@ const PropertyListingTable: React.FC<DynamicGridProps> = ({ data }) => {
     const rowData = event.data?.ID;
     console.log("Row clicked:", rowData);
     if (rowData) {
-     
-      navigate(`/property-detail/${rowData}`);
+      navigate(`/property-details/${rowData}`);
     }
   };
 

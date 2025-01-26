@@ -18,7 +18,7 @@ const userAuth = async (
       return; // Ensure no value is returned
     }
 
-    const decodeObj = jwt.verify(token, "clientPortal@secret") as {
+    const decodeObj = jwt.verify(token, `${process.env.JWT_SECRET_KEY}`) as {
       _id: string;
     };
 

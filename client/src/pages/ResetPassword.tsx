@@ -48,12 +48,20 @@ const ResetPassword = () => {
         setError("");
         setTimeout(() => navigate("/login"), 3000);
       }
-    } catch (err: any) {
-      setError(
-        err.response?.data?.error ||
-          "An error occurred while resetting the password."
-      );
-      console.log("<>", err.response);
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        // Handle Axios-specific error
+        setError(
+          err.response?.data?.error ||
+            "An error occurred while resetting the password."
+        );
+      } else if (err instanceof Error) {
+        // Handle generic Error
+        setError(err.message || "An unknown error occurred.");
+      } else {
+        // Handle unknown type
+        setError("An error occurred while resetting the password.");
+      }
     }
   };
 
@@ -65,7 +73,7 @@ const ResetPassword = () => {
         </CardHeader>
         <CardContent>
           {success && (
-            <Alert variant="success" className="mb-4">
+            <Alert variant="default" className="mb-4">
               <AlertTitle>Success</AlertTitle>
               <AlertDescription>
                 Password reset successful! Redirecting...

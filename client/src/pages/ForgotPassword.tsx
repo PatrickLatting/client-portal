@@ -23,9 +23,9 @@ const ForgotPassword = () => {
 
     if (!email) {
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: "Please enter a valid email address.",
-        variant: "destructive",
+        variant: "default",
       });
       return;
     }
@@ -49,12 +49,29 @@ const ForgotPassword = () => {
       });
 
       setTimeout(() => navigate("/"), 3000);
-    } catch (error: unknown) {
-      toast({
-        title: "❌ Error",
-        description: error?.response?.data || "Something went wrong.",
-        variant: "default",
-      });
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        // Handle Axios-specific error with response
+        toast({
+          title: "❌ Error",
+          description: error.response?.data || "Something went wrong.",
+          variant: "default",
+        });
+      } else if (error instanceof Error) {
+        // Handle generic JavaScript error
+        toast({
+          title: "❌ Error",
+          description: error.message || "Something went wrong.",
+          variant: "default",
+        });
+      } else {
+        // Handle unknown error type
+        toast({
+          title: "❌ Error",
+          description: "An unknown error occurred.",
+          variant: "default",
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }

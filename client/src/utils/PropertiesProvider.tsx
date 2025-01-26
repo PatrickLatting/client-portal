@@ -1,6 +1,3 @@
-import React, { createContext, useState, ReactNode } from "react";
-import { ForeclosureData } from "../components/ExcelViewer/types";
-
 // export const PropertiesContext = createContext();
 
 // interface PropertiesProviderProps {

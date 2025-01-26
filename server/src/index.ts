@@ -1,4 +1,5 @@
 import express, { Express } from "express";
+import dotenv from "dotenv";
 import authRouter from "./routes/auth";
 import connectDB from "./config/database";
 import profileRouter from "./routes/profile";
@@ -6,12 +7,13 @@ import propertiesRouter from "./routes/properties";
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 
+dotenv.config();
 const app: Express = express();
 const port = 8080;
 
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: `${process.env.CLIENT_DOMAIN}`,
     credentials: true,
   })
 );
@@ -27,8 +29,8 @@ app.use("/", propertiesRouter);
   try {
     await connectDB();
     console.log("Database connection established...");
-    app.listen(port, () =>
-      console.log(`Server running on http://localhost:${port}`)
+    app.listen(process.env.PORT, () =>
+      console.log(`Server running on http://localhost:${process.env.PORT}`)
     );
   } catch (err) {
     console.error(

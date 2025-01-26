@@ -4,24 +4,24 @@ import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import logo from "../assets/1914Logo.png";
-import axios from "axios";
-import { useContext, useState } from "react";
-import { UserContext } from "../App";
+import axios, { AxiosError } from "axios";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useToast } from "../hooks/use-toast";
+import { useUser } from "../hooks/useUser";
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
-  const [emailId, setEmailId] = useState("adil0277@sfscollegengp.in");
-  const [password, setPassword] = useState("Test@12345");
+  const [emailId, setEmailId] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useNavigate();
-  const context = useContext(UserContext);
+  const context = useUser();
   const { toast } = useToast();
 
   const handleLogin = async () => {
@@ -39,12 +39,20 @@ export function LoginForm({
         title: "✅ Login Successful",
         variant: "default",
       });
-    } catch (err: any) {
-      toast({
-        title: "❌ Login Failed",
-        description: err?.response?.data || "An error occurred during login.",
-        variant: "default",
-      });
+    } catch (err: unknown) {
+      if (err instanceof AxiosError) {
+        toast({
+          title: "❌ Login Failed",
+          description: err.response?.data || "An error occurred during login.",
+          variant: "default",
+        });
+      } else {
+        toast({
+          title: "❌ Login Failed",
+          description: "An unexpected error occurred.",
+          variant: "default",
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -68,7 +76,7 @@ export function LoginForm({
                   value={emailId}
                   id="email"
                   type="email"
-                  placeholder="m@example.com"
+                  placeholder="Enter mail address"
                   onChange={(e) => setEmailId(e.target.value)}
                   required
                   disabled={isLoading}
@@ -84,6 +92,7 @@ export function LoginForm({
                     onChange={(e) => setPassword(e.target.value)}
                     id="password"
                     type={showPassword ? "text" : "password"}
+                    placeholder="Enter password"
                     required
                     disabled={isLoading}
                   />

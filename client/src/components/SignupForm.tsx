@@ -37,13 +37,13 @@ function SignupForm({
 
   const handleSignup = async () => {
     try {
-      const res = await axios.post(
+      await axios.post(
         `${import.meta.env.VITE_API_BASE_URL}/signup`,
         {
           name,
           organization,
           occupation: occupation.toLowerCase(),
-          ifOther,
+          other: ifOther,
           emailId,
           howDidYouHearAboutUs,
           password,
@@ -57,14 +57,31 @@ function SignupForm({
       });
       navigate("/login");
     } catch (err) {
-      const errorMessage =
-        err?.request?.response || "Something went wrong. Please try again.";
-      toast({
-        title: "❌ Error",
-        description: errorMessage,
-        variant: "default",
-      });
-      console.log("err=>", err);
+      console.log("==>", err);
+      if (axios.isAxiosError(err)) {
+        // Safely access Axios-specific properties
+        const errorMessage =
+          err.response?.data || "Something went wrong. Please try again.";
+        toast({
+          title: "❌ Error",
+          description: errorMessage,
+          variant: "default",
+        });
+      } else if (err instanceof Error) {
+        // Handle non-Axios errors
+        toast({
+          title: "❌ Error",
+          description: err.message || "An unknown error occurred.",
+          variant: "default",
+        });
+      } else {
+        // Handle unknown error type
+        toast({
+          title: "❌ Error",
+          description: "An unexpected error occurred. Please try again.",
+          variant: "default",
+        });
+      }
     }
   };
 

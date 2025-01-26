@@ -3,6 +3,7 @@ import validator from "validator";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
+// Define the IUser interface
 export interface IUser extends Document {
   name: string;
   emailId: string;
@@ -13,11 +14,22 @@ export interface IUser extends Document {
   howDidYouHearAboutUs: string;
   resetPasswordToken?: string;
   resetPasswordExpire?: number;
+  savedProperties: string[];
+  propertiesActions: {
+    actionType: "bid" | "imageRequest"; // Enum for action type
+    propertyId: string;
+    bidAmount: number | string; // `bidAmount` can now be a number or "N/A"
+    address: string;
+    date: Date;
+    time: Date;
+    updated: boolean;
+  }[];
   getJwt(): Promise<string>;
   validatePassword(inputPassword: string): Promise<boolean>;
 }
 
-const userSchema: Schema<IUser> = new mongoose.Schema(
+// Define the schema
+const userSchema: Schema<IUser> = new Schema<IUser>(
   {
     name: { type: String, required: true },
     emailId: {
@@ -25,41 +37,62 @@ const userSchema: Schema<IUser> = new mongoose.Schema(
       required: true,
       unique: true,
       trim: true,
-      validate(value: string) {
-        if (!validator.isEmail(value)) {
-          throw new Error("Invalid email address: " + value);
-        }
+      validate: {
+        validator: (value: string) => validator.isEmail(value),
+        message: "Invalid email address",
       },
     },
     password: { type: String, required: true, minlength: 8 },
     organization: { type: String, default: "" },
     occupation: {
       type: String,
-      enum: {
-        values: [
-          "broker",
-          "institutional investor",
-          "professional flipper",
-          "other",
-        ],
-        message: `{VALUE} is not a valid occupation.`,
-      },
+      enum: [
+        "broker",
+        "institutional investor",
+        "professional flipper",
+        "other",
+      ],
       required: true,
     },
     other: { type: String, default: "" },
     howDidYouHearAboutUs: { type: String, maxlength: 50 },
     resetPasswordToken: { type: String, default: "" },
     resetPasswordExpire: { type: Number, default: 0 },
+    savedProperties: { type: [String], default: [] },
+    propertiesActions: [
+      {
+        actionType: {
+          type: String,
+          enum: ["bid", "imageRequest"],
+          required: true,
+        },
+        propertyId: { type: String, required: true },
+        bidAmount: {
+          type: Schema.Types.Mixed,
+          default: "N/A", // Default value is "N/A"
+          validate: {
+            validator: function (value: any) {
+              return value === "N/A" || typeof value === "number";
+            },
+            message: "bidAmount should be a number or 'N/A'",
+          },
+        },
+        address: String,
+        date: { type: Date, default: Date.now },
+        time: { type: Date, default: Date.now },
+        updated: { type: Boolean, default: false },
+      },
+    ],
   },
   { timestamps: true }
 );
 
+// Define instance methods
 userSchema.methods.getJwt = async function (): Promise<string> {
   const user = this;
-  const token = jwt.sign({ _id: user._id }, "clientPortal@secret", {
+  const token = jwt.sign({ _id: user._id }, `${process.env.JWT_SECRET_KEY}`, {
     expiresIn: "7d",
   });
-
   return token;
 };
 
@@ -67,9 +100,9 @@ userSchema.methods.validatePassword = async function (
   inputPassword: string
 ): Promise<boolean> {
   const user = this;
-  const isPasswordValid = await bcrypt.compare(inputPassword, user.password);
-  return isPasswordValid;
+  return await bcrypt.compare(inputPassword, user.password);
 };
 
+// Create and export the model
 const User = mongoose.model<IUser>("User", userSchema);
 export default User;

@@ -105,18 +105,34 @@ export default function Component() {
               </Link>
               {loggedIn ? (
                 <>
-                  <div className="flex w-full items-center py-2 text-lg font-semibold">
+                  <Link
+                    onClick={() => setIsSheetOpen(false)}
+                    to="#"
+                    className="flex w-full items-center py-2 text-lg font-semibold"
+                  >
                     Search
-                  </div>
-                  <div className="flex w-full items-center py-2 text-lg font-semibold">
+                  </Link>
+                  <Link
+                    onClick={() => setIsSheetOpen(false)}
+                    to="/my-properties"
+                    className="flex w-full items-center py-2 text-lg font-semibold"
+                  >
                     My Properties
-                  </div>
-                  <div className="flex w-full items-center py-2 text-lg font-semibold">
+                  </Link>
+                  <Link
+                    onClick={() => setIsSheetOpen(false)}
+                    to="/order-history"
+                    className="flex w-full items-center py-2 text-lg font-semibold"
+                  >
                     Order History
-                  </div>
-                  <div className="flex w-full items-center py-2 text-lg font-semibold">
+                  </Link>
+                  <Link
+                    onClick={() => setIsSheetOpen(false)}
+                    to="/state-laws"
+                    className="flex w-full items-center py-2 text-lg font-semibold"
+                  >
                     State Law
-                  </div>
+                  </Link>
                   <LogoutButton />
                 </>
               ) : (
@@ -157,18 +173,30 @@ export default function Component() {
         </Link>
         {loggedIn ? (
           <>
-            <div className="group inline-flex h-9 w-max items-center justify-center">
+            <Link
+              to="#"
+              className="group inline-flex h-9 w-max items-center justify-center"
+            >
               Search
-            </div>
-            <div className="group inline-flex h-9 w-max items-center justify-center">
+            </Link>
+            <Link
+              to="/my-properties"
+              className="group inline-flex h-9 w-max items-center justify-center"
+            >
               My Properties
-            </div>
-            <div className="group inline-flex h-9 w-max items-center justify-center">
+            </Link>
+            <Link
+              to="/order-history"
+              className="group inline-flex h-9 w-max items-center justify-center"
+            >
               Order History
-            </div>
-            <div className="group inline-flex h-9 w-max items-center justify-center">
+            </Link>
+            <Link
+              to="/state-laws"
+              className="group inline-flex h-9 w-max items-center justify-center"
+            >
               State Law
-            </div>
+            </Link>
             <DropdownMenu>
               <DropdownMenuTrigger>
                 <Avatar>
