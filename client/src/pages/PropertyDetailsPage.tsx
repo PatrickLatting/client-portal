@@ -16,6 +16,7 @@ import ActionHistoryTable from "../components/propertyDetails/ActionHistoryTable
 import { useUser } from "../hooks/useUser";
 import MapComponent from "../components/propertyDetails/Map";
 import { PropertyDetails } from "../types/propertyTypes";
+import ForeclosureSkeleton from "../components/ForeclosureSkeleton";
 
 const PropertyDetailsPage = () => {
   const [property, setProperty] = useState<PropertyDetails | null>(null);
@@ -23,7 +24,9 @@ const PropertyDetailsPage = () => {
   const [saveLoading, setSaveLoading] = useState(false);
   const { propId } = useParams();
   const { loggedIn, user, setUser } = useUser();
-  const [isThisPropertySaved, setIsThisPropertySaved] = useState(false);
+  const [isThisPropertySaved, setIsThisPropertySaved] = useState<
+    boolean | undefined
+  >();
   const [orderReqLoading, setOrderReqLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -35,8 +38,8 @@ const PropertyDetailsPage = () => {
       );
       setProperty(res.data.data);
 
-      const isSaved =
-        user?.savedProperties.includes(res.data.data._id) ?? false;
+      const isSaved = user?.savedProperties.includes(res.data.data._id);
+
       setIsThisPropertySaved(isSaved);
 
       setLoading(false);
@@ -50,40 +53,6 @@ const PropertyDetailsPage = () => {
     }
   };
 
-  if (loading) {
-    <div>Loading</div>;
-  }
-
-  const propertyDetails = [
-    { label: "Owner Name(s)", value: property?.OWNER_1_FULL_NAME },
-    { label: "Original Loan Balance", value: property?.MORTGAGE_AMOUNT }, // This seems to repeat the same field, you might want to replace it with a different property
-    { label: "2024 County Assessed Value", value: property?.ASSESSED_VALUE },
-    { label: "Trustee", value: property?.["Law Firm Name"] },
-    {
-      label: "Trustee Phone Number",
-      value: property?.["Attorney Phone Number"],
-    },
-    { label: "Lender", value: property?.["Lender Name"] },
-    { label: "Lender Phone Number", value: property?.["Lender Phone"] },
-    {
-      label: "County Assessed Land Value",
-      value: property?.ASSESSED_LAND_VALUE,
-    },
-    {
-      label: "2024 County Assessed Improvement Value",
-      value: property?.ASSESSED_IMPROVEMENT_VALUE,
-    },
-    { label: "Lot Acres", value: property?.LOT_ACRES },
-    { label: "Square Feet", value: property?.SQUARE_FEET },
-    { label: "Year Built", value: property?.YEAR_BUILT },
-    { label: "Bedrooms", value: property?.BEDROOMS },
-    { label: "Bathrooms", value: property?.BATHROOMS },
-    { label: "Stories", value: property?.STORIES },
-    { label: "HOA?", value: "-" }, // You might want to add a property for this
-    { label: "Parcel Number", value: property?.["Parcel Number"] },
-    { label: "Zoning", value: property?.ZONING },
-    { label: "School District", value: property?.SCHOOL_DISCTRICT },
-  ];
   useEffect(() => {
     if (!loggedIn) {
       navigate("/login");
@@ -100,8 +69,19 @@ const PropertyDetailsPage = () => {
         { propertyId: property?._id },
         { withCredentials: true }
       );
-
       setIsThisPropertySaved(true);
+      setUser((prevUser) => {
+        if (prevUser) {
+          return {
+            ...prevUser,
+            savedProperties: [
+              ...prevUser.savedProperties,
+              property?._id as string,
+            ], // Add to savedProperties list
+          };
+        }
+        return prevUser;
+      });
     } catch (err) {
       console.error("Error saving property:", err);
     } finally {
@@ -117,8 +97,19 @@ const PropertyDetailsPage = () => {
         { propertyId: property?._id },
         { withCredentials: true }
       );
+      setUser((prevUser) => {
+        if (prevUser) {
+          return {
+            ...prevUser,
+            savedProperties: prevUser.savedProperties.filter(
+              (id) => id !== property?._id // Remove from savedProperties list
+            ),
+          };
+        }
+        return prevUser;
+      });
       toast({
-        title: "✅ Property saved successfully",
+        title: "✅ Property unsaved successfully",
         variant: "default",
       });
       setIsThisPropertySaved(false);
@@ -167,11 +158,49 @@ const PropertyDetailsPage = () => {
           variant: "default",
         });
       }
-      // console.log(axiosError.message);
     } finally {
       setOrderReqLoading(false);
     }
   };
+
+  const propertyDetails = [
+    { label: "Owner Name(s)", value: property?.OWNER_1_FULL_NAME },
+    { label: "Original Loan Balance", value: property?.MORTGAGE_AMOUNT }, // This seems to repeat the same field, you might want to replace it with a different property
+    { label: "2024 County Assessed Value", value: property?.ASSESSED_VALUE },
+    { label: "Trustee", value: property?.["Law Firm Name"] },
+    {
+      label: "Trustee Phone Number",
+      value: property?.["Attorney Phone Number"],
+    },
+    { label: "Lender", value: property?.["Lender Name"] },
+    { label: "Lender Phone Number", value: property?.["Lender Phone"] },
+    {
+      label: "County Assessed Land Value",
+      value: property?.ASSESSED_LAND_VALUE,
+    },
+    {
+      label: "2024 County Assessed Improvement Value",
+      value: property?.ASSESSED_IMPROVEMENT_VALUE,
+    },
+    { label: "Lot Acres", value: property?.LOT_ACRES },
+    { label: "Square Feet", value: property?.SQUARE_FEET },
+    { label: "Year Built", value: property?.YEAR_BUILT },
+    { label: "Bedrooms", value: property?.BEDROOMS },
+    { label: "Bathrooms", value: property?.BATHROOMS },
+    { label: "Stories", value: property?.STORIES },
+    { label: "HOA?", value: "-" }, // You might want to add a property for this
+    { label: "Parcel Number", value: property?.["Parcel Number"] },
+    { label: "Zoning", value: property?.ZONING },
+    { label: "School District", value: property?.SCHOOL_DISCTRICT },
+  ];
+
+  if (loading) {
+    return (
+      <div className="flex justify-center w-full items-center h-screen">
+        <ForeclosureSkeleton />
+      </div>
+    );
+  }
 
   return (
     <div className="md:m-20 m-8">

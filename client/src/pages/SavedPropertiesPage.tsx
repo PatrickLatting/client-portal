@@ -15,6 +15,15 @@ import { useToast } from "../hooks/use-toast";
 import { PropertyDetails } from "../types/propertyTypes";
 import { Badge } from "../components/ui/badge";
 import { useNavigate } from "react-router-dom";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../components/ui/table";
+import { useUser } from "../hooks/useUser";
 
 const SavedPropertiesPage = () => {
   const [savedProperties, setSavedProperties] = useState<PropertyDetails[]>([]);
@@ -25,6 +34,7 @@ const SavedPropertiesPage = () => {
   const [rowsToShow, setRowsToShow] = useState(10);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { setUser } = useUser();
 
   const fetchSavedProps = async () => {
     try {
@@ -41,6 +51,8 @@ const SavedPropertiesPage = () => {
   useEffect(() => {
     fetchSavedProps();
   }, []);
+
+  console.log(savedProperties);
 
   const filteredProperties = savedProperties.filter((property) => {
     const searchTerm = searchInput.toLowerCase();
@@ -79,6 +91,17 @@ const SavedPropertiesPage = () => {
           return [...prevState.filter((prop) => prop?._id !== propertyId)];
         }
         return [];
+      });
+      setUser((prevUser) => {
+        if (prevUser) {
+          return {
+            ...prevUser,
+            savedProperties: prevUser.savedProperties.filter(
+              (id) => id !== propertyId // Remove from savedProperties list
+            ),
+          };
+        }
+        return prevUser;
       });
     } catch (err) {
       console.error("Error unsaving property:", err);
@@ -124,37 +147,41 @@ const SavedPropertiesPage = () => {
           </DropdownMenu>
         </div>
         <div className="my-8 overflow-x-auto rounded-lg border border-gray-300">
-          <table className="min-w-full border-collapse text-left">
-            <thead className="bg-[#fafafa]">
-              <tr>
-                <th className="border border-gray-300 p-2 w-[150px]">
+          <Table className="min-w-full">
+            <TableHeader>
+              <TableRow>
+                <TableHead className="border border-gray-300 min-w-[150px] max-w-[150px]">
                   Actions
-                </th>
-                <th className="border border-gray-300 p-2 w-[200px]">
+                </TableHead>
+                <TableHead className="border border-gray-300 min-w-[200px] max-w-[200px]">
                   Address
-                </th>
-                <th className="border border-gray-300 p-2 w-[180px]">
+                </TableHead>
+                <TableHead className="border border-gray-300 min-w-[180px] max-w-[180px]">
                   Mortgage Balance
-                </th>
-                <th className="border border-gray-300 p-2 w-[180px]">
+                </TableHead>
+                <TableHead className="border border-gray-300 min-w-[180px] max-w-[180px]">
                   Tax Assessed Value
-                </th>
-                <th className="border border-gray-300 p-2 w-[180px]">
+                </TableHead>
+                <TableHead className="border border-gray-300 min-w-[180px] max-w-[180px]">
                   Estimated Value
-                </th>
-                <th className="border border-gray-300 p-2 w-[180px]">
+                </TableHead>
+                <TableHead className="border border-gray-300 min-w-[180px] max-w-[180px]">
                   Parcel Number
-                </th>
-                <th className="border border-gray-300 p-2 w-[150px]">
+                </TableHead>
+                <TableHead className="border border-gray-300 min-w-[150px] max-w-[150px]">
                   Owner Occupancy
-                </th>
-              </tr>
-            </thead>
-            <tbody>
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+
+            <TableBody>
               {filteredProperties.length > 0 ? (
                 filteredProperties.slice(0, rowsToShow).map((property) => (
-                  <tr key={property._id as string} className="cursor-pointer">
-                    <td className="border border-gray-300 p-2 w-[150px]">
+                  <TableRow
+                    key={property._id as string}
+                    className="cursor-pointer"
+                  >
+                    <TableCell className="border border-gray-300 min-w-[150px] max-w-[150px]">
                       <Button
                         variant={"outline"}
                         className="w-full truncate"
@@ -169,67 +196,49 @@ const SavedPropertiesPage = () => {
                           "Unsave"
                         )}
                       </Button>
-                    </td>
-                    <td
-                      className="border border-gray-300 p-2 w-[200px] truncate"
-                      title={property?.MAIL_ADDRESS_STREET} // Shows full content on hover
+                    </TableCell>
+                    <TableCell
+                      className="border border-gray-300 min-w-[200px] max-w-[200px] truncate"
                       onClick={() =>
                         navigate(`/property-details/${property?.ID}`)
                       }
                     >
                       {property?.MAIL_ADDRESS_STREET}
-                    </td>
-                    <td
-                      className="border border-gray-300 p-2 w-[180px] truncate"
-                      title={
-                        property["Opening Bid/Mortgage Balance"] !== undefined
-                          ? property["Opening Bid/Mortgage Balance"].toString()
-                          : ""
-                      }
+                    </TableCell>
+                    <TableCell
+                      className="border border-gray-300 min-w-[180px] max-w-[180px] truncate"
                       onClick={() =>
                         navigate(`/property-details/${property?.ID}`)
                       }
                     >
                       {property["Opening Bid/Mortgage Balance"] || "-"}
-                    </td>
-                    <td
-                      className="border border-gray-300 p-2 w-[180px] truncate"
-                      title={
-                        property?.ASSESSED_VALUE.toString !== undefined
-                          ? property?.ASSESSED_VALUE.toString()
-                          : ""
-                      }
+                    </TableCell>
+                    <TableCell
+                      className="border border-gray-300 min-w-[180px] max-w-[180px] truncate"
                       onClick={() =>
                         navigate(`/property-details/${property?.ID}`)
                       }
                     >
                       {property?.ASSESSED_VALUE}
-                    </td>
-                    <td
-                      className="border border-gray-300 p-2 w-[180px] truncate"
-                      title={
-                        property?.ESTIMATED_VALUE !== undefined
-                          ? property.ESTIMATED_VALUE.toString()
-                          : ""
-                      }
+                    </TableCell>
+                    <TableCell
+                      className="border border-gray-300 min-w-[180px] max-w-[180px] truncate"
                       onClick={() =>
                         navigate(`/property-details/${property?.ID}`)
                       }
                     >
                       {property?.ESTIMATED_VALUE}
-                    </td>
-                    <td
-                      className="border border-gray-300 p-2 w-[180px] truncate"
-                      title={property["Parcel Number"]}
+                    </TableCell>
+                    <TableCell
+                      className="border border-gray-300 min-w-[180px] max-w-[180px] truncate"
                       onClick={() =>
                         navigate(`/property-details/${property?.ID}`)
                       }
                     >
                       {property["Parcel Number"]}
-                    </td>
-                    <td
-                      className="border border-gray-300 p-2 w-[150px] truncate"
-                      title={property?.OWNER_OCCUPANCY}
+                    </TableCell>
+                    <TableCell
+                      className="border border-gray-300 min-w-[150px] max-w-[150px] truncate"
                       onClick={() =>
                         navigate(`/property-details/${property?.ID}`)
                       }
@@ -237,21 +246,18 @@ const SavedPropertiesPage = () => {
                       <Badge variant={"outline"}>
                         {property?.OWNER_OCCUPANCY}
                       </Badge>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))
               ) : (
-                <tr>
-                  <td
-                    colSpan={7}
-                    className="border border-gray-300 p-2 text-center"
-                  >
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center">
                     No matching properties found
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               )}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
 
         {filteredProperties.length > rowsToShow && (

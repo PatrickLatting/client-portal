@@ -1,3 +1,4 @@
+import { Button } from "../components/ui/button";
 import {
   Table,
   TableBody,
@@ -16,6 +17,7 @@ const formatDate = (dateString: string) => {
 const OrderHistory = () => {
   const { user } = useUser();
   const [searchInput, setSearchInput] = useState(""); // State for search input
+  const [rowsToShow, setRowsToShow] = useState(10);
 
   if (!user) {
     return <div>Data not found</div>;
@@ -31,6 +33,10 @@ const OrderHistory = () => {
       (action.updated && action.updated.toString().includes(searchTerm))
     );
   });
+
+  const handleSeeMore = () => {
+    setRowsToShow(rowsToShow + rowsToShow);
+  };
 
   return (
     <div className="p-4 m-8">
@@ -67,7 +73,7 @@ const OrderHistory = () => {
           </TableHeader>
           <TableBody className="min-w-56 overflow-y-auto">
             {filteredActions.length > 0 ? (
-              filteredActions.map((action) => (
+              filteredActions.slice(0, rowsToShow).map((action) => (
                 <TableRow key={action._id as string}>
                   <TableCell className="border border-gray-300">
                     {action.address}
@@ -97,6 +103,13 @@ const OrderHistory = () => {
             )}
           </TableBody>
         </Table>
+        {filteredActions.length > rowsToShow && (
+          <div className="m-4 text-center">
+            <Button onClick={handleSeeMore} variant={"outline"}>
+              See More
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
