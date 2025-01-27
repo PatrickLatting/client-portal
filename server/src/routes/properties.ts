@@ -269,11 +269,16 @@ propertiesRouter.post(
 
         // Send email notification for image order
         const emailSubject = "New Image Request Received";
-        const emailText = `You have received an image order request for property located at ${address}.`;
-        const emailHtml = `<p>You have received an image order request for property located at <strong>${address}</strong>.</p>`;
+        const emailText = `A user (${user.emailId}) has requested images for property located at ${address}.`;
+        const emailHtml = `<p>New image request details:</p>
+            <ul>
+              <li>User: ${user.emailId}</li>
+              <li>Property Address: ${address}</li>
+              <li>Request Time: ${new Date().toLocaleString()}</li>
+            </ul>`;
 
         const emailSuccess = await sendMail({
-          to: emailId,
+          to: `${process.env.EMAIL_USER}`,
           subject: emailSubject,
           text: emailText,
           html: emailHtml,
@@ -287,19 +292,38 @@ propertiesRouter.post(
       // Handle the "bid" action type
       if (actionType === "bid") {
         // Send email notification for bid
-        const emailSubject = "New Bid Received";
-        const emailText = `You have received a bid of $${formattedBidAmount} for property located at ${address}.`;
-        const emailHtml = `<p>You have received a bid of <strong>$${formattedBidAmount}</strong> for property located at <strong>${address}</strong>.</p>`;
-
-        const emailSuccess = await sendMail({
-          to: emailId, // Replace with the email you want to send the notification to
-          subject: emailSubject,
-          text: emailText,
-          html: emailHtml,
+        const ownerEmailSuccess = await sendMail({
+          to: emailId,
+          subject: "New Bid Received",
+          text: `You have received a bid of $${formattedBidAmount} for property located at ${address}.`,
+          html: `
+            <p>You have received a new bid:</p>
+            <ul>
+              <li>Bid Amount: <strong>$${formattedBidAmount}</strong></li>
+              <li>Property Address: <strong>${address}</strong></li>
+              <li>Bid Time: ${new Date().toLocaleString()}</li>
+            </ul>
+          `,
         });
 
-        if (!emailSuccess) {
-          console.log("Error sending email notification for bid.");
+        // Send bid notification to admin
+        const adminEmailSuccess = await sendMail({
+          to: `${process.env.EMAIL_USER}`,
+          subject: "New Bid Placed",
+          text: `A new bid of $${formattedBidAmount} has been placed for property at ${address} by ${user.emailId}.`,
+          html: `
+            <p>New bid details:</p>
+            <ul>
+              <li>Bid Amount: <strong>$${formattedBidAmount}</strong></li>
+              <li>Property Address: <strong>${address}</strong></li>
+              <li>Bidder Email: ${user.emailId}</li>
+              <li>Bid Time: ${new Date().toLocaleString()}</li>
+            </ul>
+          `,
+        });
+
+        if (!ownerEmailSuccess || !adminEmailSuccess) {
+          console.error("Error sending one or more bid notifications.");
         }
       }
 
