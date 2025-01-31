@@ -100,21 +100,21 @@ export default function Component() {
             </div>
             {/* Mobile menu items */}
             <div className="grid gap-2 py-6">
-              <Link
+              {/* <Link
                 to="/about"
                 className="flex w-full items-center py-2 text-lg font-semibold"
                 onClick={() => setIsSheetOpen(false)} // Close the sheet on click
               >
                 About
-              </Link>
+              </Link> */}
               {loggedIn ? (
                 <>
                   <Link
                     onClick={() => setIsSheetOpen(false)}
-                    to="#"
+                    to="/"
                     className="flex w-full items-center py-2 text-lg font-semibold"
                   >
-                    Search
+                    Home
                   </Link>
                   <Link
                     onClick={() => setIsSheetOpen(false)}
@@ -130,13 +130,13 @@ export default function Component() {
                   >
                     Order History
                   </Link>
-                  <Link
+                  {/* <Link
                     onClick={() => setIsSheetOpen(false)}
                     to="/state-laws"
                     className="flex w-full items-center py-2 text-lg font-semibold"
                   >
                     State Law
-                  </Link>
+                  </Link> */}
                   <LogoutButton />
                 </>
               ) : (
@@ -169,19 +169,19 @@ export default function Component() {
 
       {/* Desktop Navigation */}
       <nav className="ml-auto hidden lg:flex gap-6">
-        <Link
+        {/* <Link
           to="/about"
           className="group inline-flex h-9 w-max items-center justify-center"
         >
           About
-        </Link>
+        </Link> */}
         {loggedIn ? (
           <>
             <Link
-              to="#"
+              to="/"
               className="group inline-flex h-9 w-max items-center justify-center"
             >
-              Search
+             Home
             </Link>
             <Link
               to="/my-properties"
@@ -195,12 +195,12 @@ export default function Component() {
             >
               Order History
             </Link>
-            <Link
+            {/* <Link
               to="/state-laws"
               className="group inline-flex h-9 w-max items-center justify-center"
             >
               State Law
-            </Link>
+            </Link> */}
             <DropdownMenu>
               <DropdownMenuTrigger>
                 <Avatar>
