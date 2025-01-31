@@ -1,4 +1,4 @@
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { HashRouter, Route, Routes } from "react-router-dom";  // Changed from BrowserRouter
 import AppTemplate from "./components/AppTemplate";
 import LoginPage from "./pages/LoginPage";
 import HomePage from "./pages/HomePage";
@@ -36,7 +36,7 @@ function App() {
     <UserContext.Provider value={{ loggedIn, setLoggedIn, user, setUser }}>
       <ToastProvider>
         <Toaster />
-        <BrowserRouter basename="/">
+        <HashRouter>  {/* Changed from BrowserRouter and removed basename */}
           <Routes>
             <Route path="/" element={<AppTemplate />}>
               <Route
@@ -109,7 +109,7 @@ function App() {
               />
             </Route>
           </Routes>
-        </BrowserRouter>
+        </HashRouter>
       </ToastProvider>
     </UserContext.Provider>
   );
