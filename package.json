@@ -1,16 +1,41 @@
 {
-  "name": "client-portal",
+  "name": "server",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "concurrently \"npm run dev --prefix client\" \"npm run dev --prefix server\"",
+    "start": "concurrently \"npm run dev-backend\" \"npm run start-frontend\"",
+    "dev-backend": "nodemon backend/index.ts",
+    "start-frontend": "npm run start --prefix frontend",
+    "build": "npm run build-backend && npm run build-frontend",
+    "build-backend": "tsc",
+    "build-frontend": "npm run build --prefix frontend",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
+  "devDependencies": {
+    "@types/bcrypt": "^5.0.2",
+    "@types/express": "^5.0.0",
+    "@types/jsonwebtoken": "^9.0.7",
+    "@types/node": "^22.10.7",
+    "@types/nodemailer": "^6.4.17",
+    "@types/validator": "^13.12.2",
+    "concurrently": "^9.1.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.3"
+  },
   "dependencies": {
-    "concurrently": "^9.1.2"
+    "bcrypt": "^5.1.1",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.9.5",
+    "nodemailer": "^6.9.16",
+    "nodemon": "^3.1.9",
+    "validator": "^13.12.0"
   }
 }
