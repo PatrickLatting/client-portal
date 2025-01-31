@@ -7,9 +7,9 @@
 ## Installation
 
 ### Client Setup
-1. Navigate to the client directory:
+1. Navigate to the frontend directory:
 ```bash
-cd client-portal/client
+cd client-portal/frontend
 ```
   ### .env file
 
@@ -21,31 +21,19 @@ npm install
 
 ```
 
-### Server Setup
-1. Navigate to the server directory:
-```bash
-cd client-portal/server
-```
-
-2. Install dependencies:
-```bash
-npm install
-
-```
-
 ## Development
 
-### Starting the Client
+### Starting the frontend
 ```bash
-cd client-portal/client
-npm run dev
+cd client-portal/frontend
+npm run start
 
 ```
 
-### Starting the Server
+### Starting the backend
 ```bash
-cd server
-npm run dev
+
+npm run dev-backend
 
 ```
 
