@@ -30,7 +30,7 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 function App() {
   const [loggedIn, setLoggedIn] = useState(false);
   const [user, setUser] = useState<IUser | null>(null);
-  console.log(process.env.REACT_APP_API_BASE_URL);
+  
 
   return (
     <UserContext.Provider value={{ loggedIn, setLoggedIn, user, setUser }}>
