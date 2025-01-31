@@ -32,7 +32,7 @@ npm run start
 
 ### Starting the backend
 ```bash
-cd server
+
 npm run dev-backend
 
 ```
