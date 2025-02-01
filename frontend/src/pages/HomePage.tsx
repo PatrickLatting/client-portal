@@ -8,7 +8,7 @@ export default function HomePage() {
       <div className="lg:mx-40 md:mx-10 py-10 lg:py-20">
         <div className="md:flex text-center md:text-left md:items-center mx-auto justify-between">
           <div className="md:w-1/2 p-4">
-            <h1 className="text-[30px] tracking-tight font-semibold md:mr-10 mx-auto">
+            <h1 className="text-[60px] tracking-tight font-semibold md:mr-10 mx-auto">
               The most comprehensive foreclosure database in the world.
             </h1>
             <Link to="/login">
