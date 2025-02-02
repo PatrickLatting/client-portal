@@ -37,7 +37,6 @@ const PropertyListingPage = () => {
     "SQUARE_FEET",
     "HOA_PRESENT",
     "LOT_ACRES",
-    ,
   ];
 
   const [searchInput, setSearchInput] = useState("");
