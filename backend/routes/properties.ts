@@ -24,7 +24,7 @@ propertiesRouter.get("/get-properties", async (req: Request, res: Response) => {
     // Handle `search` query: searches in both `ADDRESS_FROM_INPUT` and `County`
     if (search && search !== "") {
       filter.$or = [
-        { ADDRESS_FROM_INPUT: { $regex: search, $options: "i" } },
+        { Address: { $regex: search, $options: "i" } },
         { County: { $regex: search, $options: "i" } },
       ];
     }

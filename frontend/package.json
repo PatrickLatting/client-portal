@@ -21,6 +21,7 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.0.0",
     "cra-template-typescript": "1.2.0",
+    "embla-carousel-react": "^8.5.2",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.473.0",
     "papaparse": "^5.5.1",

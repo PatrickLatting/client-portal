@@ -4,7 +4,7 @@ const propertySchema = new mongoose.Schema({
   _id: {
     $oid: String,
   },
-  ADDRESS_FROM_INPUT: { type: String, index: true },
+  Address: { type: String, index: true },
   ID: Number,
   ASSESSED_VALUE: Number,
   ASSESSED_LAND_VALUE: Number,
@@ -149,7 +149,7 @@ const propertySchema = new mongoose.Schema({
   "Notice Identification": String,
   "Notice Content": String,
   County: { type: String, index: true },
-  Address: String,
+
   "Parcel Number": String,
   "Principal Amount Owed": Number,
   "Date of Debt": String,

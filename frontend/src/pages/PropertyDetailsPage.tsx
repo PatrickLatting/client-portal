@@ -17,6 +17,8 @@ import { useUser } from "../hooks/useUser";
 import MapComponent from "../components/propertyDetails/Map";
 import { PropertyDetails } from "../types/propertyTypes";
 import ForeclosureSkeleton from "../components/ForeclosureSkeleton";
+import PropertyImageCarousel from "../components/ImgCarousel";
+// import PropertyImageCarousel, { ImgCarousel } from "../components/ImgCarousel";
 
 const PropertyDetailsPage = () => {
   const [property, setProperty] = useState<PropertyDetails | null>(null);
@@ -119,7 +121,7 @@ const PropertyDetailsPage = () => {
       setSaveLoading(false);
     }
   };
-
+  console.log(property);
   const orderImage = async () => {
     setOrderReqLoading(true);
     try {
@@ -128,7 +130,7 @@ const PropertyDetailsPage = () => {
         {
           propertyId: property?._id,
           actionType: "imageRequest",
-          address: property?.ADDRESS_FROM_INPUT,
+          address: property?.Address,
           emailId: user?.emailId,
         },
         {
@@ -178,7 +180,7 @@ const PropertyDetailsPage = () => {
       value: property?.["Attorney Phone Number"],
     },
     { label: "Lender", value: property?.["Lender Name"] },
-    { label: "Lender Phone Number", value: property?.["Lender Phone"] },
+    { label: "Lender Phone Number", value: property?.["Lender Phone Number"] },
     {
       label: "County Assessed Land Value",
       value: property?.ASSESSED_LAND_VALUE,
@@ -208,91 +210,113 @@ const PropertyDetailsPage = () => {
   }
 
   return (
-    <div className="md:m-20 m-8">
-      <div className="md:flex my-3">
-        <div className="w-32 h-32 bg-slate-300 rounded-md mx-auto md:mx-0"></div>
-        <div className="md:mx-4">
-          <div className="md:text-2xl text-xl font-semibold mb-2 p-0 md:text-left text-center">
-            {property?.ADDRESS_FROM_INPUT}
-          </div>
-          <div className="flex flex-col">
-            <Badge variant={"outline"} className="my-2 w-fit mx-auto md:mx-0">
-              {property?.LAND_USE}
-            </Badge>
-            <Badge variant={"outline"} className="my-2 w-fit mx-auto md:mx-0">
-              {property?.["Borrower Name(s)"]}
-            </Badge>
-          </div>
+    <div className="container mx-auto px-4 py-6 max-w-7xl">
+      {/* Header Section */}
+      <div className="space-y-6 mb-8">
+        <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold text-center">
+          {property?.Address}
+        </h1>
+        
+        <div className="flex flex-wrap gap-3 justify-center">
+          <Badge variant="outline" className="text-sm md:text-base px-4 py-1">
+            {property?.LAND_USE}
+          </Badge>
+          <Badge variant="outline" className="text-sm md:text-base px-4 py-1">
+            {property?.["Borrower Name(s)"]}
+          </Badge>
         </div>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 w-full ">
-        {propertyDetails.map((item, index) => (
-          <div key={index} className="flex flex-col m-2 text-sm">
-            <div className="font-semibold">{item.label}</div>
-            <div className="mt-2 text-slate-600">{item.value || "-"}</div>
-          </div>
-        ))}
+
+      {/* Image Carousel Section */}
+      <div className="mb-8 rounded-lg overflow-hidden shadow-lg">
+        <PropertyImageCarousel
+          googleEarthUrl={property?.["Google Maps Image URL"]}
+          googleMapsUrl={property?.["Google Earth Image URL"]}
+          address={property?.Address}
+        />
       </div>
 
-      <div className="my-3">
+      {/* Actions Section */}
+      <div className="mb-8 flex flex-wrap gap-3 justify-center md:justify-start">
         {isThisPropertySaved ? (
-          <div className="my-2 ">
-            <BidAlert
-              propertyId={property?._id}
-              address={property?.ADDRESS_FROM_INPUT}
-            />
-            {orderReqLoading ? (
-              <Button variant={"outline"} disabled={true}>
-                Order Property Images... <Loader2 className="animate-spin" />
-              </Button>
-            ) : (
-              <Button variant={"outline"} className="mx-2" onClick={orderImage}>
-                Order Property Images
-              </Button>
-            )}
+          <>
+            <BidAlert propertyId={property?._id} address={property?.Address} />
+            <Button 
+              variant="outline" 
+              disabled={orderReqLoading}
+              onClick={orderImage}
+              className="w-full md:w-auto"
+            >
+              {orderReqLoading ? (
+                <>Order Property Images... <Loader2 className="ml-2 animate-spin" /></>
+              ) : (
+                "Order Property Images"
+              )}
+            </Button>
             <DropdownMenu>
-              <DropdownMenuTrigger>
-                <Button variant={"outline"} className="mx-2">
-                  ...
-                </Button>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="w-10">...</Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
                 <DropdownMenuItem onClick={unsaveProperty}>
                   {saveLoading ? (
-                    <>
-                      Unsaving... <Loader2 className="animate-spin" />
-                    </>
+                    <>Unsaving... <Loader2 className="ml-2 animate-spin" /></>
                   ) : (
                     "Unsave"
                   )}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          </div>
+          </>
         ) : (
-          <Button variant="outline" onClick={saveProperty}>
+          <Button 
+            variant="outline" 
+            onClick={saveProperty}
+            className="w-full md:w-auto"
+          >
             {saveLoading ? (
-              <>
-                Saving... <Loader2 className="animate-spin" />
-              </>
+              <>Saving... <Loader2 className="ml-2 animate-spin" /></>
             ) : (
               "Save"
             )}
           </Button>
         )}
       </div>
-      {property?.LATITUDE && property?.LONGITUDE ? (
-        <div className="z-10">
-          <MapComponent
-            latitude={property?.LATITUDE}
-            longitude={property?.LONGITUDE}
-            zoom={12}
-          />
+
+      {/* Property Details Grid */}
+      <div className="mb-8 bg-white rounded-lg shadow-lg p-6">
+        <h2 className="text-xl md:text-2xl font-semibold mb-6">Property Details</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {propertyDetails.map((item, index) => (
+            <div key={index} className="space-y-2">
+              <div className="font-medium text-gray-700">{item.label}</div>
+              <div className="text-gray-600">{item.value || "-"}</div>
+            </div>
+          ))}
         </div>
-      ) : (
-        <Loader2 className="animate-spin size-10" />
-      )}
-      <ActionHistoryTable propertyId={property?._id} />
+      </div>
+
+      {/* Map Section */}
+      <div className="mb-8 bg-white rounded-lg shadow-lg overflow-hidden">
+        {property?.LATITUDE && property?.LONGITUDE ? (
+          <div className="h-96">
+            <MapComponent
+              latitude={property.LATITUDE}
+              longitude={property.LONGITUDE}
+              zoom={12}
+            />
+          </div>
+        ) : (
+          <div className="flex justify-center items-center h-96">
+            <Loader2 className="animate-spin w-8 h-8" />
+          </div>
+        )}
+      </div>
+
+      {/* Action History Table */}
+      <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+        <ActionHistoryTable propertyId={property?._id} />
+      </div>
     </div>
   );
 };

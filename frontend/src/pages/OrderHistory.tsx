@@ -27,13 +27,13 @@ const OrderHistory = () => {
   const filteredActions = user.propertiesActions.filter((action) => {
     const searchTerm = searchInput.toLowerCase();
     return (
-      action.address.toLowerCase().includes(searchTerm) ||
+      action.address?.toLowerCase().includes(searchTerm) ||
       action.actionType.toLowerCase().includes(searchTerm) ||
       (action.bidAmount && action.bidAmount.toString().includes(searchTerm)) ||
       (action.updated && action.updated.toString().includes(searchTerm))
     );
   });
-
+ console.log(filteredActions);
   const handleSeeMore = () => {
     setRowsToShow(rowsToShow + rowsToShow);
   };
