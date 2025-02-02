@@ -22,17 +22,22 @@ const PropertyListingTable = lazy(() => import("../components/propertyListing/Pr
 
 const PropertyListingPage = () => {
   const selectedColumns = [
-    "ID",
-    "County",
     "Address",
-    "RECORDING_DATE_2",
+    "State",
+    "County",
+    "LAND_USE",
+    "Principal Amount Owed",
+    "ESTIMATED_VALUE",
     "Foreclosure Sale Date",
-    "SCHOOL_DISCTRICT",
-    "LAST_SALE_AMOUNT",
-    "ADDRESS_FROM_BACKEND",
-    "ADDRESS_FROM_INPUT",
-    "LOT_SQUARE_FEET",
-    "ASSESSMENT_YEAR",
+    "Parcel Number",
+    "YEAR_BUILT",
+    "BEDROOMS",
+    "BATHROOMS",
+    "STORIES",
+    "SQUARE_FEET",
+    "HOA_PRESENT",
+    "LOT_ACRES",
+    ,
   ];
 
   const [searchInput, setSearchInput] = useState("");
