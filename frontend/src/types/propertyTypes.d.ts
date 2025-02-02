@@ -5,10 +5,10 @@ export type PropertyDetails = {
   Address: string;
   "Parcel Number": string;
   "Principal Amount Owed": string;
-  
+
   "Lender Name": string;
   "Lender Phone Number": string;
-  
+
   "Law Firm Name": string;
   "Foreclosure Sale Date": string;
   ID: number;
@@ -148,12 +148,11 @@ export type PropertyDetails = {
   "Notice Identification": string;
   "Notice Content": string;
   County: string;
- 
- 
+
   "Date of Debt": string;
- 
+
   "Borrower Name(s)": string;
- 
+
   "Attorney Phone Number": string;
   "Foreclosure Sale Date": string;
   "Lender Phone": string;
@@ -162,5 +161,3 @@ export type PropertyDetails = {
   "Google Maps Image URL": string;
   "Google Earth Image URL": string;
 };
-
-

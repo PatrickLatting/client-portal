@@ -226,15 +226,19 @@ const PropertyDetailsPage = () => {
           </Badge>
         </div>
       </div>
-
-      {/* Image Carousel Section */}
-      <div className="mb-8 rounded-lg overflow-hidden shadow-lg">
-        <PropertyImageCarousel
-          googleEarthUrl={property?.["Google Maps Image URL"]}
-          googleMapsUrl={property?.["Google Earth Image URL"]}
-          address={property?.Address}
-        />
+   {/* Property Details Grid */}
+   <div className="mb-8 bg-white rounded-lg shadow-lg p-6">
+        <h2 className="text-xl md:text-2xl font-semibold mb-6">Property Details</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {propertyDetails.map((item, index) => (
+            <div key={index} className="space-y-2">
+              <div className="font-medium text-gray-700">{item.label}</div>
+              <div className="text-gray-600">{item.value || "-"}</div>
+            </div>
+          ))}
+        </div>
       </div>
+    
 
       {/* Actions Section */}
       <div className="mb-8 flex flex-wrap gap-3 justify-center md:justify-start">
@@ -283,17 +287,13 @@ const PropertyDetailsPage = () => {
         )}
       </div>
 
-      {/* Property Details Grid */}
-      <div className="mb-8 bg-white rounded-lg shadow-lg p-6">
-        <h2 className="text-xl md:text-2xl font-semibold mb-6">Property Details</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {propertyDetails.map((item, index) => (
-            <div key={index} className="space-y-2">
-              <div className="font-medium text-gray-700">{item.label}</div>
-              <div className="text-gray-600">{item.value || "-"}</div>
-            </div>
-          ))}
-        </div>
+      {/* Image Carousel Section */}
+      <div className="mb-8 rounded-lg overflow-hidden shadow-lg">
+        <PropertyImageCarousel
+          googleEarthUrl={property?.["Google Maps Image URL"]}
+          googleMapsUrl={property?.["Google Earth Image URL"]}
+          address={property?.Address}
+        />
       </div>
 
       {/* Map Section */}
