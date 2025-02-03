@@ -40,7 +40,7 @@ propertiesRouter.get("/get-properties", async (req: Request, res: Response) => {
     // Handle `propertyType` query: filters by `PROPERTY_CLASS`
     if (propertyType && propertyType !== "") {
       const propertyTypes = propertyType.split(",").map((item) => item.trim());
-      filter.PROPERTY_CLASS = {
+      filter.LAND_USE = {
         $in: propertyTypes.map((type) => new RegExp(type, "i")),
       };
     }
@@ -48,7 +48,7 @@ propertiesRouter.get("/get-properties", async (req: Request, res: Response) => {
     // Handle `ownerType` query: filters by `OWNERSHIP_TYPE`
     if (ownerType && ownerType !== "") {
       const ownerTypes = ownerType.split(",").map((item) => item.trim());
-      filter.OWNERSHIP_TYPE = {
+      filter.HOA_PRESENT = {
         $in: ownerTypes.map((type) => new RegExp(type, "i")),
       };
     }
@@ -56,7 +56,7 @@ propertiesRouter.get("/get-properties", async (req: Request, res: Response) => {
     // Handle `state` query: filters by `MAIL_ADDRESS_STATE`
     if (state && state !== "") {
       const states = state.split(",").map((item) => item.trim());
-      filter.MAIL_ADDRESS_STATE = {
+      filter.State = {
         $in: states.map((stateItem) => new RegExp(stateItem, "i")),
       };
     }
