@@ -38,7 +38,7 @@ propertiesRouter.get("/get-properties", async (req: Request, res: Response) => {
     }
 
     // Handle `propertyType` query: filters by `PROPERTY_CLASS`
-    if (propertyType && propertyType !== "") {
+    if (landUse && landUse !== "") {
       const landUses = propertyType.split(",").map((item) => item.trim());
       filter.LAND_USE = {
         $in: propertyTypes.map((type) => new RegExp(type, "i")),
@@ -46,7 +46,7 @@ propertiesRouter.get("/get-properties", async (req: Request, res: Response) => {
     }
 
     // Handle `ownerType` query: filters by `OWNERSHIP_TYPE`
-    if (ownerType && ownerType !== "") {
+    if (hoaPresent && hoaPresent !== "") {
       const hoaValues = ownerType.split(",").map((item) => item.trim());
       filter.HOA_PRESENT = {
         $in: ownerTypes.map((type) => new RegExp(type, "i")),
