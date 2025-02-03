@@ -56,6 +56,7 @@ const PropertyListingTable: React.FC<DynamicGridProps> = ({
       if (
         columnName.includes("VALUE") ||
         columnName.includes("AMOUNT") ||
+        columnName.includes("Principal") ||
         columnName.includes("EQUITY") ||
         columnName.includes("MORTGAGE")
       ) {
