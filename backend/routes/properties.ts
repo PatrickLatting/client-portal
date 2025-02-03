@@ -15,8 +15,8 @@ propertiesRouter.get("/get-properties", async (req: Request, res: Response) => {
 
     const search = (req.query.search as string) || ""; // Search query
     const county = (req.query.county as string) || "";
-    const landUse = (req.query.landUse as string) || "";
-    const hoaPresent = (req.query.hoaPresent as string) || "";
+    const propertyType = (req.query.propertyType as string) || "";
+    const ownerType = (req.query.ownerType as string) || "";
     const state = (req.query.state as string) || "";
 
     const filter: any = {};
@@ -38,25 +38,25 @@ propertiesRouter.get("/get-properties", async (req: Request, res: Response) => {
     }
 
     // Handle `propertyType` query: filters by `PROPERTY_CLASS`
-    if (landUse && landUse !== "") {
-      const landUses = landUse.split(",").map((item: string) => item.trim());
-      filter.LAND_USE = {
-        $in: landUses.map((type) => new RegExp(type, "i")),
+    if (propertyType && propertyType !== "") {
+      const propertyTypes = propertyType.split(",").map((item) => item.trim());
+      filter.PROPERTY_CLASS = {
+        $in: propertyTypes.map((type) => new RegExp(type, "i")),
       };
     }
 
     // Handle `ownerType` query: filters by `OWNERSHIP_TYPE`
-    if (hoaPresent && hoaPresent !== "") {
-      const hoaValues = hoaPresent.split(",").map((item: string) => item.trim());
-      filter.HOA_PRESENT = {
-        $in: hoaValues.map((type) => new RegExp(type, "i")),
+    if (ownerType && ownerType !== "") {
+      const ownerTypes = ownerType.split(",").map((item) => item.trim());
+      filter.OWNERSHIP_TYPE = {
+        $in: ownerTypes.map((type) => new RegExp(type, "i")),
       };
     }
 
     // Handle `state` query: filters by `MAIL_ADDRESS_STATE`
     if (state && state !== "") {
       const states = state.split(",").map((item) => item.trim());
-      filter.State = {
+      filter.MAIL_ADDRESS_STATE = {
         $in: states.map((stateItem) => new RegExp(stateItem, "i")),
       };
     }
@@ -66,16 +66,16 @@ propertiesRouter.get("/get-properties", async (req: Request, res: Response) => {
       properties,
       total,
       allCounties,
-      allLandUses,
-      allHoaPresent,
+      allPropertyTypes,
+      allOwnerTypes,
       allStates,
     ] = await Promise.all([
       Properties.find(filter).skip(skip).limit(limit),
       Properties.countDocuments(filter),
       Properties.distinct("County"),
-      Properties.distinct("LAND_USE"),
-      Properties.distinct("HOA_PRESENT"),
-      Properties.distinct("State"),
+      Properties.distinct("PROPERTY_CLASS"),
+      Properties.distinct("OWNERSHIP_TYPE"),
+      Properties.distinct("MAIL_ADDRESS_STATE"),
     ]);
 
     // Return response
@@ -87,8 +87,8 @@ propertiesRouter.get("/get-properties", async (req: Request, res: Response) => {
         totalCount: total,
       },
       allCounties,
-      allLandUses,
-      allHoaPresent,
+      allOwnerTypes,
+      allPropertyTypes,
       allStates,
     });
   } catch (err: any) {
