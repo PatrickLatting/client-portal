@@ -257,7 +257,7 @@ const PropertyListingPage = () => {
 
       <div className="text-center py-10 p-2">
         <h2 className="text-3xl font-semibold">
-          Search for Georgia, Tennessee, and Virginia foreclosures
+          Search for Georgia and Arizona Foreclosures
         </h2>
         <p className="text-xl my-4">
           We offer the most comprehensive foreclosure database in the world.
