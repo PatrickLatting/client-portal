@@ -39,17 +39,17 @@ propertiesRouter.get("/get-properties", async (req: Request, res: Response) => {
 
     // Handle `propertyType` query: filters by `PROPERTY_CLASS`
     if (landUse && landUse !== "") {
-      const landUses = propertyType.split(",").map((item) => item.trim());
+      const landUses = landUse.split(",").map((item: string) => item.trim());
       filter.LAND_USE = {
-        $in: propertyTypes.map((type) => new RegExp(type, "i")),
+        $in: landUses.map((type) => new RegExp(type, "i")),
       };
     }
 
     // Handle `ownerType` query: filters by `OWNERSHIP_TYPE`
     if (hoaPresent && hoaPresent !== "") {
-      const hoaValues = ownerType.split(",").map((item) => item.trim());
+      const hoaValues = hoaPresent.split(",").map((item: string) => item.trim());
       filter.HOA_PRESENT = {
-        $in: ownerTypes.map((type) => new RegExp(type, "i")),
+        $in: hoaValues.map((type) => new RegExp(type, "i")),
       };
     }
 
