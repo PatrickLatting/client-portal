@@ -37,10 +37,10 @@ propertiesRouter.get("/get-properties", async (req: Request, res: Response) => {
       };
     }
 
-    // Handle `propertyType` query: filters by `PROPERTY_CLASS`
+    // Handle `propertyType` query: filters by `LAND_USE`
     if (propertyType && propertyType !== "") {
       const propertyTypes = propertyType.split(",").map((item) => item.trim());
-      filter.PROPERTY_CLASS = {
+      filter.LAND_USE = {
         $in: propertyTypes.map((type) => new RegExp(type, "i")),
       };
     }
@@ -53,10 +53,10 @@ propertiesRouter.get("/get-properties", async (req: Request, res: Response) => {
       };
     }
 
-    // Handle `state` query: filters by `MAIL_ADDRESS_STATE`
+    // Handle `state` query: filters by `State`
     if (state && state !== "") {
       const states = state.split(",").map((item) => item.trim());
-      filter.MAIL_ADDRESS_STATE = {
+      filter.State = {
         $in: states.map((stateItem) => new RegExp(stateItem, "i")),
       };
     }
@@ -73,9 +73,9 @@ propertiesRouter.get("/get-properties", async (req: Request, res: Response) => {
       Properties.find(filter).skip(skip).limit(limit),
       Properties.countDocuments(filter),
       Properties.distinct("County"),
-      Properties.distinct("PROPERTY_CLASS"),
+      Properties.distinct("LAND_USE"),
       Properties.distinct("OWNERSHIP_TYPE"),
-      Properties.distinct("MAIL_ADDRESS_STATE"),
+      Properties.distinct("State"),
     ]);
 
     // Return response
