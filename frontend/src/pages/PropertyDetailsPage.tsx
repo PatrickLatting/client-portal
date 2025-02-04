@@ -222,7 +222,7 @@ const PropertyDetailsPage = () => {
             {property?.LAND_USE}
           </Badge>
           <Badge variant="outline" className="text-sm md:text-base px-4 py-1">
-            {property?.["Borrower Name(s)"]}
+            {property?.["Foreclosure Sale Date"] || "No Sale Date Available"}
           </Badge>
         </div>
       </div>
