@@ -106,7 +106,7 @@ authRouter.post(
       user.resetPasswordExpire = resetTokenExpire;
       await user.save();
 
-      const resetURL = `${process.env.CLIENT_DOMAIN}/reset-password/${resetToken}`;
+      const resetURL = `${process.env.CLIENT_DOMAIN}/#/reset-password/${resetToken}`;
 
       const htmlEmail = `
       <!DOCTYPE html>
