@@ -172,7 +172,7 @@ const PropertyDetailsPage = () => {
 
   const propertyDetails = [
     { label: "Owner Name(s)", value: property?.OWNER_1_FULL_NAME },
-    { label: "Original Loan Balance", value: property?.MORTGAGE_AMOUNT }, // This seems to repeat the same field, you might want to replace it with a different property
+    { label: "Original Loan Balance", value: property?.["Principal Amount Owed"] }, // This seems to repeat the same field, you might want to replace it with a different property
     { label: "2024 County Assessed Value", value: property?.ASSESSED_VALUE },
     { label: "Trustee", value: property?.["Law Firm Name"] },
     {
@@ -195,7 +195,7 @@ const PropertyDetailsPage = () => {
     { label: "Bedrooms", value: property?.BEDROOMS },
     { label: "Bathrooms", value: property?.BATHROOMS },
     { label: "Stories", value: property?.STORIES },
-    { label: "HOA?", value: "-" }, // You might want to add a property for this
+    { label: "HOA?", value: property?.HOA_PRESENT }, // You might want to add a property for this
     { label: "Parcel Number", value: property?.["Parcel Number"] },
     { label: "Zoning", value: property?.ZONING },
     { label: "School District", value: property?.SCHOOL_DISCTRICT },
