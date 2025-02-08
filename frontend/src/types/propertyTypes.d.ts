@@ -44,7 +44,7 @@ export type PropertyDetails = {
   MOBILE_HOME: boolean;
   TIMESHARE: boolean;
   CASH_BUYER: boolean;
-  HOA_PRESENT: boolean;
+  HOA_PRESENT: number;
   HOMESTEAD_EXEMPT: boolean;
   APN: string;
   APN_UNFORMATTED: string;

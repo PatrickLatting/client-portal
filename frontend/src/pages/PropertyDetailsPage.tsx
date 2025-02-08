@@ -41,7 +41,6 @@ const PropertyDetailsPage = () => {
       setProperty(res.data.data);
 
       const isSaved = user?.savedProperties.includes(res.data.data._id);
-
       setIsThisPropertySaved(isSaved);
 
       setLoading(false);
@@ -61,6 +60,7 @@ const PropertyDetailsPage = () => {
     } else {
       fetchProperty();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const saveProperty = async () => {
@@ -79,7 +79,7 @@ const PropertyDetailsPage = () => {
             savedProperties: [
               ...prevUser.savedProperties,
               property?._id as string,
-            ], // Add to savedProperties list
+            ],
           };
         }
         return prevUser;
@@ -104,7 +104,7 @@ const PropertyDetailsPage = () => {
           return {
             ...prevUser,
             savedProperties: prevUser.savedProperties.filter(
-              (id) => id !== property?._id // Remove from savedProperties list
+              (id) => id !== property?._id
             ),
           };
         }
@@ -121,7 +121,7 @@ const PropertyDetailsPage = () => {
       setSaveLoading(false);
     }
   };
-  console.log(property);
+
   const orderImage = async () => {
     setOrderReqLoading(true);
     try {
@@ -145,7 +145,6 @@ const PropertyDetailsPage = () => {
         variant: "default",
       });
       const updatedPropertiesActions = res.data.propertiesActions;
-
       setUser((prevUser) => {
         if (prevUser) {
           return {
@@ -157,10 +156,9 @@ const PropertyDetailsPage = () => {
       });
     } catch (err) {
       const axiosError = err as AxiosError;
-
       if (axiosError.response?.status === 400) {
         toast({
-          title: `❌ Error`,
+          title: "❌ Error",
           description: "Failed to place bid",
           variant: "default",
         });
@@ -170,35 +168,45 @@ const PropertyDetailsPage = () => {
     }
   };
 
-  const propertyDetails = [
-    { label: "Owner Name(s)", value: property?.OWNER_1_FULL_NAME },
-    { label: "Original Loan Balance", value: property?.["Principal Amount Owed"] }, // This seems to repeat the same field, you might want to replace it with a different property
-    { label: "2024 County Assessed Value", value: property?.ASSESSED_VALUE },
-    { label: "Trustee", value: property?.["Law Firm Name"] },
-    {
-      label: "Trustee Phone Number",
-      value: property?.["Attorney Phone Number"],
-    },
-    { label: "Lender", value: property?.["Lender Name"] },
-    { label: "Lender Phone Number", value: property?.["Lender Phone Number"] },
-    {
-      label: "County Assessed Land Value",
-      value: property?.ASSESSED_LAND_VALUE,
-    },
-    {
-      label: "2024 County Assessed Improvement Value",
-      value: property?.ASSESSED_IMPROVEMENT_VALUE,
-    },
-    { label: "Lot Acres", value: property?.LOT_ACRES },
+  // Break out the details into separate headings within one container
+  const propertyDetailsSection = [
+    
+    { label: "Estimated Value", value: property?.ESTIMATED_VALUE },
     { label: "Square Feet", value: property?.SQUARE_FEET },
-    { label: "Year Built", value: property?.YEAR_BUILT },
     { label: "Bedrooms", value: property?.BEDROOMS },
     { label: "Bathrooms", value: property?.BATHROOMS },
     { label: "Stories", value: property?.STORIES },
-    { label: "HOA?", value: property?.HOA_PRESENT }, // You might want to add a property for this
-    { label: "Parcel Number", value: property?.["Parcel Number"] },
+    { label: "Lot Acres", value: property?.LOT_ACRES },
+    { label: "Year Built", value: property?.YEAR_BUILT },
+    { label: "Effective Year Built", value: property?.EFFECTIVE_YEAR_BUILT },
+    { label: "HOA?", value: property?.HOA_PRESENT === 1 ? "Yes" : "No" },
+    { label: "Tax Amount", value: property?.["TAX_AMOUNT"] },
     { label: "Zoning", value: property?.ZONING },
     { label: "School District", value: property?.SCHOOL_DISCTRICT },
+  ];
+
+  const foreclosureDetailsSection = [
+    { label: "Original Loan Balance", value: property?.["Principal Amount Owed"] ?? "Not Available" },
+    { label: "Trustee", value: property?.["Law Firm Name"] ?? "Not Available"},
+    { label: "Lender", value: property?.["Lender Name"] ?? "Not Available"},
+    { label: "Date of Debt", value: property?.["Date of Debt"] ?? "Not Available"},
+    { label: "Trustee Phone Number", value: property?.["Attorney Phone Number"] ?? "Not Available"},
+    { label: "Lender Phone Number", value: property?.["Lender Phone Number"] ?? "Not Available"},
+    { label: "Foreclosure Sale Date", value: property?.["Foreclosure Sale Date"] ?? "Not Available"},
+    
+  ];
+  
+  const ownershipDetailsSection = [
+    { label: "Owner Name(s)", value: property?.OWNER_1_FULL_NAME },
+    { label: "Properties Owned", value: property?.PROPERTIES_OWNED },
+    { label: "Occupancy", value: property?.OWNER_OCCUPANCY },
+    { label: "Last Purchased", value: property?.SALE_DATE_1 },
+    { 
+      label: "Years of Ownership", 
+      value: property?.SALE_DATE_1 
+          ? Math.floor((new Date().getTime() - new Date(property.SALE_DATE_1).getTime()) / (1000 * 60 * 60 * 24 * 365.25)) 
+          : "Not Available"
+  }
   ];
 
   if (loading) {
@@ -212,11 +220,11 @@ const PropertyDetailsPage = () => {
   return (
     <div className="container mx-auto px-4 py-6 max-w-7xl">
       {/* Header Section */}
-      <div className="space-y-6 mb-8">
+      <div className="space-y-6 mb-20">
         <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold text-center">
           {property?.Address}
         </h1>
-        
+
         <div className="flex flex-wrap gap-3 justify-center">
           <Badge variant="outline" className="text-sm md:text-base px-4 py-1">
             {property?.LAND_USE}
@@ -224,94 +232,152 @@ const PropertyDetailsPage = () => {
           <Badge variant="outline" className="text-sm md:text-base px-4 py-1">
             {property?.["Foreclosure Sale Date"] || "No Sale Date Available"}
           </Badge>
+          <Badge variant="outline" className="text-sm md:text-base px-4 py-1">
+            {property?.["Parcel Number"] || "No Sale Date Available"}
+          </Badge>
         </div>
       </div>
-   {/* Property Details Grid */}
-   <div className="mb-8 bg-white rounded-lg shadow-lg p-6">
-        <h2 className="text-xl md:text-2xl font-semibold mb-6">Property Details</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {propertyDetails.map((item, index) => (
-            <div key={index} className="space-y-2">
-              <div className="font-medium text-gray-700">{item.label}</div>
-              <div className="text-gray-600">{item.value || "-"}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-    
-
+      
       {/* Actions Section */}
-      <div className="mb-8 flex flex-wrap gap-3 justify-center md:justify-start">
-        {isThisPropertySaved ? (
-          <>
-            <BidAlert propertyId={property?._id} address={property?.Address} />
-            <Button 
-              variant="outline" 
-              disabled={orderReqLoading}
-              onClick={orderImage}
-              className="w-full md:w-auto"
-            >
-              {orderReqLoading ? (
-                <>Order Property Images... <Loader2 className="ml-2 animate-spin" /></>
-              ) : (
-                "Order Property Images"
-              )}
-            </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="w-10">...</Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem onClick={unsaveProperty}>
-                  {saveLoading ? (
-                    <>Unsaving... <Loader2 className="ml-2 animate-spin" /></>
-                  ) : (
-                    "Unsave"
-                  )}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </>
-        ) : (
-          <Button 
-            variant="outline" 
-            onClick={saveProperty}
-            className="w-full md:w-auto"
-          >
-            {saveLoading ? (
-              <>Saving... <Loader2 className="ml-2 animate-spin" /></>
-            ) : (
-              "Save"
-            )}
-          </Button>
-        )}
+<div className="mb-8 flex flex-wrap gap-4 justify-start">
+  {/* Save/Unsave Button */}
+  {isThisPropertySaved ? (
+    <Button
+      variant="outline"
+      onClick={unsaveProperty}
+      className="border-2 border-[rgb(5,27,50)] px-8 py-4 text-lg font-semibold bg-white text-[rgb(5,27,50)]"
+      disabled={saveLoading}
+    >
+      {saveLoading ? (
+        <>
+          Unsaving... <Loader2 className="ml-2 animate-spin" />
+        </>
+      ) : (
+        "Unsave"
+      )}
+    </Button>
+  ) : (
+    <Button
+      variant="outline"
+      onClick={saveProperty}
+      className="border-2 border-[rgb(5,27,50)] px-8 py-4 text-lg font-semibold bg-white text-[rgb(5,27,50)]"
+      disabled={saveLoading}
+    >
+      {saveLoading ? (
+        <>
+          Saving... <Loader2 className="ml-2 animate-spin" />
+        </>
+      ) : (
+        "Save"
+      )}
+    </Button>
+  )}
+
+  {/* Order Property Images Button */}
+  <Button
+    variant="outline"
+    onClick={orderImage}
+    className="border-2 border-[rgb(5,27,50)] px-8 py-4 text-lg font-semibold bg-white text-[rgb(5,27,50)]"
+    disabled={orderReqLoading}
+  >
+    {orderReqLoading ? (
+      <>
+        Ordering... <Loader2 className="ml-2 animate-spin" />
+      </>
+    ) : (
+      "Order Property Images"
+    )}
+  </Button>
+
+  {/* Enter / Change Bid Button */}
+  <BidAlert propertyId={property?._id} address={property?.Address} />
+</div>
+
+
+      {/* Combined Details Section in a single container */}
+      <div className="mb-6 bg-white rounded-lg shadow-lg p-6 space-y-8">
+
+      {/* Ownership Details Header & Grid */}
+      <section>
+          <h2 className="text-x1 md:text-2xl font-semibold mb-4">
+            Ownership Details
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
+            {ownershipDetailsSection.map((item, index) => (
+              <div key={index} className="space-y-2">
+                <div className="font-medium text-blue-900">{item.label}</div>
+                <div className="text-gray-700">{item.value || "-"}</div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <hr className="border-t border-gray-200 my-4" />
+
+        {/* Property Details Header & Grid */}
+        <section>
+          <h2 className="text-xl md:text-2xl font-semibold mb-4">
+            Property Details
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
+            {propertyDetailsSection.map((item, index) => (
+              <div key={index} className="space-y-2">
+                <div className="font-medium text-blue-900">{item.label}</div>
+                <div className="text-gray-700">{item.value || "-"}</div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <hr className="border-t border-gray-200 my-4" />
+
+        {/* Foreclosure Details Header & Grid */}
+        <section>
+          <h2 className="text-xl md:text-2xl font-semibold mb-4">
+            Foreclosure Details
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-3">
+            {foreclosureDetailsSection.map((item, index) => (
+              <div key={index} className="space-y-2">
+                <div className="font-medium text-blue-900">{item.label}</div>
+                <div className="text-gray-700">{item.value || "-"}</div>
+              </div>
+            ))}
+          </div>
+        </section>
       </div>
 
-      {/* Image Carousel Section */}
-      <div className="mb-8 rounded-lg overflow-hidden shadow-lg">
-        <PropertyImageCarousel
-          googleEarthUrl={property?.["Google Maps Image URL"]}
-          googleMapsUrl={property?.["Google Earth Image URL"]}
-          address={property?.Address}
+      
+
+      {/* Image Carousel & Map Section Combined */}
+<div className="mb-8 bg-white rounded-lg shadow-lg overflow-hidden flex flex-col md:flex-row gap-4">
+  {/* Image Carousel (Left) */}
+  <div className="w-full md:w-1/2 rounded-lg overflow-hidden">
+    <PropertyImageCarousel
+      googleEarthUrl={property?.["Google Maps Image URL"]}
+      googleMapsUrl={property?.["Google Earth Image URL"]}
+      address={property?.Address}
+    />
+  </div>
+
+  {/* Map (Right) */}
+  <div className="w-full md:w-1/2 rounded-lg overflow-hidden">
+    {property?.LATITUDE && property?.LONGITUDE ? (
+      <div className="h-96">
+        <MapComponent
+          latitude={property.LATITUDE}
+          longitude={property.LONGITUDE}
+          zoom={12}
         />
       </div>
-
-      {/* Map Section */}
-      <div className="mb-8 bg-white rounded-lg shadow-lg overflow-hidden">
-        {property?.LATITUDE && property?.LONGITUDE ? (
-          <div className="h-96">
-            <MapComponent
-              latitude={property.LATITUDE}
-              longitude={property.LONGITUDE}
-              zoom={12}
-            />
-          </div>
-        ) : (
-          <div className="flex justify-center items-center h-96">
-            <Loader2 className="animate-spin w-8 h-8" />
-          </div>
-        )}
+    ) : (
+      <div className="flex justify-center items-center h-96">
+        <Loader2 className="animate-spin w-8 h-8" />
       </div>
+    )}
+  </div>
+</div>
+
 
       {/* Action History Table */}
       <div className="bg-white rounded-lg shadow-lg overflow-hidden">

@@ -75,7 +75,7 @@ function BidAlert({ propertyId, address }: Props) {
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button variant="outline" disabled={bidReqLoading}>
+        <Button variant="outline" disabled={bidReqLoading} className="border-2 border-[rgb(5,27,50)] px-4 py-4 text-lg font-semibold bg-white text-[rgb(5,27,50)]">
           {bidReqLoading ? (
             <>
               Enter / Change Bid
