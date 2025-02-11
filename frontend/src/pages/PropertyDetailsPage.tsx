@@ -4,6 +4,7 @@ import axios, { AxiosError } from "axios";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
 import { Loader2 } from "lucide-react";
+import { Dialog, DialogContent, DialogTrigger } from "../components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -374,12 +375,36 @@ const PropertyDetailsPage = () => {
           documentType: property?.DOCUMENT_TYPE_1,
         },
         {
+          saleDate: property?.SALE_DATE_2,
+          amount: property?.AMOUNT_2,
+          buyer: property?.BUYER_2,
+          seller: property?.SELLER_2,
+          transactionType: property?.TRANSACTION_TYPE_2,
+          documentType: property?.DOCUMENT_TYPE_2,
+        },
+        {
           saleDate: property?.SALE_DATE_3,
           amount: property?.AMOUNT_3,
           buyer: property?.BUYER_3,
           seller: property?.SELLER_3,
           transactionType: property?.TRANSACTION_TYPE_3,
           documentType: property?.DOCUMENT_TYPE_3,
+        },
+        {
+          saleDate: property?.SALE_DATE_4,
+          amount: property?.AMOUNT_4,
+          buyer: property?.BUYER_4,
+          seller: property?.SELLER_4,
+          transactionType: property?.TRANSACTION_TYPE_4,
+          documentType: property?.DOCUMENT_TYPE_4,
+        },
+        {
+          saleDate: property?.SALE_DATE_5,
+          amount: property?.AMOUNT_5,
+          buyer: property?.BUYER_5,
+          seller: property?.SELLER_5,
+          transactionType: property?.TRANSACTION_TYPE_5,
+          documentType: property?.DOCUMENT_TYPE_5,
         },
         {
           saleDate: property?.SALE_DATE_6,

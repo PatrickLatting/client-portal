@@ -113,8 +113,11 @@ export type PropertyDetails = {
   PURCHASE_METHOD_1: string;
   RECORDING_DATE_2: string;
   SALE_DATE_2: string;
+  AMOUNT_2: string;
   DOCUMENT_TYPE_2: string;
+  TRANSACTION_TYPE_2: string;
   BUYER_2: string;
+  SELLER_2: string;
   RECORDING_DATE_3: string;
   SALE_DATE_3: string;
   AMOUNT_3: string;
@@ -126,12 +129,14 @@ export type PropertyDetails = {
   PURCHASE_METHOD_3: string;
   RECORDING_DATE_4: string;
   SALE_DATE_4: string;
+  AMOUNT_4: string;
   DOCUMENT_TYPE_4: string;
   TRANSACTION_TYPE_4: string;
   BUYER_4: string;
   SELLER_4: string;
   RECORDING_DATE_5: string;
   SALE_DATE_5: string;
+  AMOUNT_5: string;
   DOCUMENT_TYPE_5: string;
   TRANSACTION_TYPE_5: string;
   BUYER_5: string;
