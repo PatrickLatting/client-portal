@@ -22,7 +22,7 @@ const ForeclosureSkeleton = () => (
       ))}
     </div>
 
-    <div className="mt-6 space-y-4 w-full overflow-x-auto">
+    <div className="mt-6 space-y-4 w-full overflow-hidden">
       <div className="inline-block min-w-full">
         {[...Array(5)].map((_, i) => (
           <div key={i} className="grid grid-cols-6 gap-4 w-full">

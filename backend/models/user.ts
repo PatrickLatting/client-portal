@@ -16,7 +16,7 @@ export interface IUser extends Document {
   resetPasswordExpire?: number;
   savedProperties: string[];
   propertiesActions: {
-    actionType: "bid" | "imageRequest"; // Enum for action type
+    actionType: "bid" | "imageRequest" | "titleRequest"; // Enum for action type
     propertyId: string;
     bidAmount: number | string; // `bidAmount` can now be a number or "N/A"
     address: string;
@@ -63,7 +63,7 @@ const userSchema: Schema<IUser> = new Schema<IUser>(
       {
         actionType: {
           type: String,
-          enum: ["bid", "imageRequest"],
+          enum: ["bid", "imageRequest", "titleRequest"],
           required: true,
         },
         propertyId: { type: String, required: true },

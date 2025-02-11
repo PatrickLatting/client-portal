@@ -2,16 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios, { AxiosError } from "axios";
 import { Badge } from "../components/ui/badge";
-import { Button } from "../components/ui/button";
 import { Loader2 } from "lucide-react";
-import { Dialog, DialogContent, DialogTrigger } from "../components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "../components/ui/dropdown-menu";
-import BidAlert from "../components/propertyDetails/BidAlert";
 import { useToast } from "../hooks/use-toast";
 import ActionHistoryTable from "../components/propertyDetails/ActionHistoryTable";
 import { useUser } from "../hooks/useUser";
@@ -19,6 +10,7 @@ import MapComponent from "../components/propertyDetails/Map";
 import { PropertyDetails } from "../types/propertyTypes";
 import ForeclosureSkeleton from "../components/ForeclosureSkeleton";
 import PropertyImageCarousel from "../components/ImgCarousel";
+import PropertyActions from "../components/propertyDetails/PropertyActions";
 // import PropertyImageCarousel, { ImgCarousel } from "../components/ImgCarousel";
 
 const PropertyDetailsPage = () => {
@@ -171,7 +163,6 @@ const PropertyDetailsPage = () => {
 
   // Break out the details into separate headings within one container
   const propertyDetailsSection = [
-    
     { label: "Estimated Value", value: property?.ESTIMATED_VALUE },
     { label: "Square Feet", value: property?.SQUARE_FEET },
     { label: "Bedrooms", value: property?.BEDROOMS },
@@ -187,27 +178,44 @@ const PropertyDetailsPage = () => {
   ];
 
   const foreclosureDetailsSection = [
-    { label: "Original Loan Balance", value: property?.["Principal Amount Owed"] ?? "Not Available" },
-    { label: "Trustee", value: property?.["Law Firm Name"] ?? "Not Available"},
-    { label: "Lender", value: property?.["Lender Name"] ?? "Not Available"},
-    { label: "Date of Debt", value: property?.["Date of Debt"] ?? "Not Available"},
-    { label: "Trustee Phone Number", value: property?.["Attorney Phone Number"] ?? "Not Available"},
-    { label: "Lender Phone Number", value: property?.["Lender Phone Number"] ?? "Not Available"},
-    { label: "Foreclosure Sale Date", value: property?.["Foreclosure Sale Date"] ?? "Not Available"},
-    
+    {
+      label: "Original Loan Balance",
+      value: property?.["Principal Amount Owed"] ?? "Not Available",
+    },
+    { label: "Trustee", value: property?.["Law Firm Name"] ?? "Not Available" },
+    { label: "Lender", value: property?.["Lender Name"] ?? "Not Available" },
+    {
+      label: "Date of Debt",
+      value: property?.["Date of Debt"] ?? "Not Available",
+    },
+    {
+      label: "Trustee Phone Number",
+      value: property?.["Attorney Phone Number"] ?? "Not Available",
+    },
+    {
+      label: "Lender Phone Number",
+      value: property?.["Lender Phone Number"] ?? "Not Available",
+    },
+    {
+      label: "Foreclosure Sale Date",
+      value: property?.["Foreclosure Sale Date"] ?? "Not Available",
+    },
   ];
-  
+
   const ownershipDetailsSection = [
     { label: "Owner Name(s)", value: property?.OWNER_1_FULL_NAME },
     { label: "Properties Owned", value: property?.PROPERTIES_OWNED },
     { label: "Occupancy", value: property?.OWNER_OCCUPANCY },
     { label: "Last Purchased", value: property?.SALE_DATE_1 },
-    { 
-      label: "Years of Ownership", 
-      value: property?.SALE_DATE_1 
-          ? Math.floor((new Date().getTime() - new Date(property.SALE_DATE_1).getTime()) / (1000 * 60 * 60 * 24 * 365.25)) 
-          : "Not Available"
-  }
+    {
+      label: "Years of Ownership",
+      value: property?.SALE_DATE_1
+        ? Math.floor(
+            (new Date().getTime() - new Date(property.SALE_DATE_1).getTime()) /
+              (1000 * 60 * 60 * 24 * 365.25)
+          )
+        : "Not Available",
+    },
   ];
 
   if (loading) {
@@ -238,67 +246,18 @@ const PropertyDetailsPage = () => {
           </Badge>
         </div>
       </div>
-      
+
       {/* Actions Section */}
-<div className="mb-8 flex flex-wrap gap-4 justify-start">
-  {/* Save/Unsave Button */}
-  {isThisPropertySaved ? (
-    <Button
-      variant="outline"
-      onClick={unsaveProperty}
-      className="border-2 border-[rgb(5,27,50)] px-8 py-4 text-lg font-semibold bg-white text-[rgb(5,27,50)]"
-      disabled={saveLoading}
-    >
-      {saveLoading ? (
-        <>
-          Unsaving... <Loader2 className="ml-2 animate-spin" />
-        </>
-      ) : (
-        "Unsave"
-      )}
-    </Button>
-  ) : (
-    <Button
-      variant="outline"
-      onClick={saveProperty}
-      className="border-2 border-[rgb(5,27,50)] px-8 py-4 text-lg font-semibold bg-white text-[rgb(5,27,50)]"
-      disabled={saveLoading}
-    >
-      {saveLoading ? (
-        <>
-          Saving... <Loader2 className="ml-2 animate-spin" />
-        </>
-      ) : (
-        "Save"
-      )}
-    </Button>
-  )}
-
-  {/* Order Property Images Button */}
-  <Button
-    variant="outline"
-    onClick={orderImage}
-    className="border-2 border-[rgb(5,27,50)] px-8 py-4 text-lg font-semibold bg-white text-[rgb(5,27,50)]"
-    disabled={orderReqLoading}
-  >
-    {orderReqLoading ? (
-      <>
-        Ordering... <Loader2 className="ml-2 animate-spin" />
-      </>
-    ) : (
-      "Order Property Images"
-    )}
-  </Button>
-
-  {/* Enter / Change Bid Button */}
-  <BidAlert propertyId={property?._id} address={property?.Address} />
-</div>
+      <PropertyActions
+        property={property}
+        isThisPropertySaved={isThisPropertySaved}
+        setIsThisPropertySaved={setIsThisPropertySaved}
+      />
 
       {/* Combined Details Section in a single container */}
       <div className="mb-6 bg-white rounded-lg shadow-lg p-6 space-y-8">
-
-      {/* Ownership Details Header & Grid */}
-      <section>
+        {/* Ownership Details Header & Grid */}
+        <section>
           <h2 className="text-x1 md:text-2xl font-semibold mb-4">
             Ownership Details
           </h2>
@@ -313,7 +272,7 @@ const PropertyDetailsPage = () => {
         </section>
 
         <hr className="border-t border-gray-200 my-4" />
-      
+
         {/* Property Details Header & Grid */}
         <section>
           <h2 className="text-xl md:text-2xl font-semibold mb-4">
@@ -348,171 +307,174 @@ const PropertyDetailsPage = () => {
       </div>
 
       {/* Sale and Assessment History Section */}
-{property && (
-  <div className="mb-8 bg-white rounded-lg shadow-lg p-6 space-y-8">
-    {/* Recent Sale History Table */}
-<section>
-  <h2 className="text-xl md:text-2xl font-semibold mb-4">Recent Sale History</h2>
-  <table className="w-full text-left border-collapse">
-    <thead className="border-b border-gray-300">
-      <tr>
-        <th className="px-4 py-2 text-gray-700">Sale Date</th>
-        <th className="px-4 py-2 text-gray-700">Amount</th>
-        <th className="px-4 py-2 text-gray-700">Buyer</th>
-        <th className="px-4 py-2 text-gray-700">Seller</th>
-        <th className="px-4 py-2 text-gray-700">Transaction Type</th>
-        <th className="px-4 py-2 text-gray-700">Document Type</th>
-      </tr>
-    </thead>
-    <tbody>
-      {[
-        {
-          saleDate: property?.SALE_DATE_1,
-          amount: property?.AMOUNT_1,
-          buyer: property?.BUYER_1,
-          seller: property?.SELLER_1,
-          transactionType: property?.TRANSACTION_TYPE_1,
-          documentType: property?.DOCUMENT_TYPE_1,
-        },
-        {
-          saleDate: property?.SALE_DATE_2,
-          amount: property?.AMOUNT_2,
-          buyer: property?.BUYER_2,
-          seller: property?.SELLER_2,
-          transactionType: property?.TRANSACTION_TYPE_2,
-          documentType: property?.DOCUMENT_TYPE_2,
-        },
-        {
-          saleDate: property?.SALE_DATE_3,
-          amount: property?.AMOUNT_3,
-          buyer: property?.BUYER_3,
-          seller: property?.SELLER_3,
-          transactionType: property?.TRANSACTION_TYPE_3,
-          documentType: property?.DOCUMENT_TYPE_3,
-        },
-        {
-          saleDate: property?.SALE_DATE_4,
-          amount: property?.AMOUNT_4,
-          buyer: property?.BUYER_4,
-          seller: property?.SELLER_4,
-          transactionType: property?.TRANSACTION_TYPE_4,
-          documentType: property?.DOCUMENT_TYPE_4,
-        },
-        {
-          saleDate: property?.SALE_DATE_5,
-          amount: property?.AMOUNT_5,
-          buyer: property?.BUYER_5,
-          seller: property?.SELLER_5,
-          transactionType: property?.TRANSACTION_TYPE_5,
-          documentType: property?.DOCUMENT_TYPE_5,
-        },
-        {
-          saleDate: property?.SALE_DATE_6,
-          amount: property?.AMOUNT_6,
-          buyer: property?.BUYER_6,
-          seller: "N/A",
-          transactionType: property?.TRANSACTION_TYPE_6,
-          documentType: property?.DOCUMENT_TYPE_6,
-        },
-      ].map((sale, index) => (
-        <tr key={index} className="border-b border-gray-200">
-          <td className="px-4 py-2">{sale.saleDate || "N/A"}</td>
-          <td className="px-4 py-2">
-            {sale.amount
-              ? new Intl.NumberFormat("en-US", {
-                  style: "currency",
-                  currency: "USD",
-                }).format(Number(sale.amount))
-              : "N/A"}
-          </td>
-          <td className="px-4 py-2">{sale.buyer || "N/A"}</td>
-          <td className="px-4 py-2">{sale.seller || "N/A"}</td>
-          <td className="px-4 py-2">{sale.transactionType || "N/A"}</td>
-          <td className="px-4 py-2">{sale.documentType || "N/A"}</td>
-        </tr>
-      ))}
-    </tbody>
-  </table>
-</section>
+      {property && (
+        <div className="mb-8 bg-white rounded-lg shadow-lg p-6 space-y-8">
+          {/* Recent Sale History Table */}
+          <section>
+            <h2 className="text-xl md:text-2xl font-semibold mb-4">
+              Recent Sale History
+            </h2>
+            <table className="w-full text-left border-collapse">
+              <thead className="border-b border-gray-300">
+                <tr>
+                  <th className="px-4 py-2 text-gray-700">Sale Date</th>
+                  <th className="px-4 py-2 text-gray-700">Amount</th>
+                  <th className="px-4 py-2 text-gray-700">Buyer</th>
+                  <th className="px-4 py-2 text-gray-700">Seller</th>
+                  <th className="px-4 py-2 text-gray-700">Transaction Type</th>
+                  <th className="px-4 py-2 text-gray-700">Document Type</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  {
+                    saleDate: property?.SALE_DATE_1,
+                    amount: property?.AMOUNT_1,
+                    buyer: property?.BUYER_1,
+                    seller: property?.SELLER_1,
+                    transactionType: property?.TRANSACTION_TYPE_1,
+                    documentType: property?.DOCUMENT_TYPE_1,
+                  },
+                  {
+                    saleDate: property?.SALE_DATE_2,
+                    amount: property?.AMOUNT_2,
+                    buyer: property?.BUYER_2,
+                    seller: property?.SELLER_2,
+                    transactionType: property?.TRANSACTION_TYPE_2,
+                    documentType: property?.DOCUMENT_TYPE_2,
+                  },
+                  {
+                    saleDate: property?.SALE_DATE_3,
+                    amount: property?.AMOUNT_3,
+                    buyer: property?.BUYER_3,
+                    seller: property?.SELLER_3,
+                    transactionType: property?.TRANSACTION_TYPE_3,
+                    documentType: property?.DOCUMENT_TYPE_3,
+                  },
+                  {
+                    saleDate: property?.SALE_DATE_4,
+                    amount: property?.AMOUNT_4,
+                    buyer: property?.BUYER_4,
+                    seller: property?.SELLER_4,
+                    transactionType: property?.TRANSACTION_TYPE_4,
+                    documentType: property?.DOCUMENT_TYPE_4,
+                  },
+                  {
+                    saleDate: property?.SALE_DATE_5,
+                    amount: property?.AMOUNT_5,
+                    buyer: property?.BUYER_5,
+                    seller: property?.SELLER_5,
+                    transactionType: property?.TRANSACTION_TYPE_5,
+                    documentType: property?.DOCUMENT_TYPE_5,
+                  },
+                  {
+                    saleDate: property?.SALE_DATE_6,
+                    amount: property?.AMOUNT_6,
+                    buyer: property?.BUYER_6,
+                    seller: "N/A",
+                    transactionType: property?.TRANSACTION_TYPE_6,
+                    documentType: property?.DOCUMENT_TYPE_6,
+                  },
+                ].map((sale, index) => (
+                  <tr key={index} className="border-b border-gray-200">
+                    <td className="px-4 py-2">{sale.saleDate || "N/A"}</td>
+                    <td className="px-4 py-2">
+                      {sale.amount
+                        ? new Intl.NumberFormat("en-US", {
+                            style: "currency",
+                            currency: "USD",
+                          }).format(Number(sale.amount))
+                        : "N/A"}
+                    </td>
+                    <td className="px-4 py-2">{sale.buyer || "N/A"}</td>
+                    <td className="px-4 py-2">{sale.seller || "N/A"}</td>
+                    <td className="px-4 py-2">
+                      {sale.transactionType || "N/A"}
+                    </td>
+                    <td className="px-4 py-2">{sale.documentType || "N/A"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
 
-    {/* Recent Assessment History Table (Horizontal Layout) */}
-<section>
-  <h2 className="text-xl md:text-2xl font-semibold mb-4">Recent Assessment History</h2>
+          {/* Recent Assessment History Table (Horizontal Layout) */}
+          <section>
+            <h2 className="text-xl md:text-2xl font-semibold mb-4">
+              Recent Assessment History
+            </h2>
 
-  {property && (
-    <table className="w-full text-left border-collapse">
-      <thead className="border-b border-gray-300">
-        <tr>
-          {[
-            property.TAX_YEAR_1,
-            property.TAX_YEAR_2,
-            property.TAX_YEAR_3,
-            property.TAX_YEAR_4,
-            property.TAX_YEAR_5,
-          ].map((year, index) => (
-            <th key={index} className="px-4 py-2 text-gray-700">
-              {year || "N/A"}
-            </th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        <tr className="border-b border-gray-200">
-          {[
-            property.ASSESSED_VALUE_1,
-            property.ASSESSED_VALUE_2,
-            property.ASSESSED_VALUE_3,
-            property.ASSESSED_VALUE_4,
-            property.ASSESSED_VALUE_5,
-          ].map((value, index) => (
-            <td key={index} className="px-4 py-2">
-              {value
-                ? new Intl.NumberFormat("en-US", {
-                    style: "currency",
-                    currency: "USD",
-                  }).format(Number(value))
-                : "N/A"}
-            </td>
-          ))}
-        </tr>
-      </tbody>
-    </table>
-  )}
-</section>
-
-
-  </div>
-)}
+            {property && (
+              <table className="w-full text-left border-collapse">
+                <thead className="border-b border-gray-300">
+                  <tr>
+                    {[
+                      property.TAX_YEAR_1,
+                      property.TAX_YEAR_2,
+                      property.TAX_YEAR_3,
+                      property.TAX_YEAR_4,
+                      property.TAX_YEAR_5,
+                    ].map((year, index) => (
+                      <th key={index} className="px-4 py-2 text-gray-700">
+                        {year || "N/A"}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-b border-gray-200">
+                    {[
+                      property.ASSESSED_VALUE_1,
+                      property.ASSESSED_VALUE_2,
+                      property.ASSESSED_VALUE_3,
+                      property.ASSESSED_VALUE_4,
+                      property.ASSESSED_VALUE_5,
+                    ].map((value, index) => (
+                      <td key={index} className="px-4 py-2">
+                        {value
+                          ? new Intl.NumberFormat("en-US", {
+                              style: "currency",
+                              currency: "USD",
+                            }).format(Number(value))
+                          : "N/A"}
+                      </td>
+                    ))}
+                  </tr>
+                </tbody>
+              </table>
+            )}
+          </section>
+        </div>
+      )}
 
       {/* Image Carousel & Map Section Combined */}
-<div className="mb-8 bg-white rounded-lg shadow-lg overflow-hidden flex flex-col md:flex-row gap-4">
-  {/* Image Carousel (Left) */}
-  <div className="w-full md:w-1/2 rounded-lg overflow-hidden">
-    <PropertyImageCarousel
-      googleEarthUrl={property?.["Google Maps Image URL"]}
-      googleMapsUrl={property?.["Google Earth Image URL"]}
-      address={property?.Address}
-    />
-  </div>
+      <div className="mb-8 bg-white rounded-lg shadow-lg overflow-hidden flex flex-col md:flex-row gap-4">
+        {/* Image Carousel (Left) */}
+        <div className="w-full md:w-1/2 rounded-lg overflow-hidden">
+          <PropertyImageCarousel
+            googleEarthUrl={property?.["Google Maps Image URL"]}
+            googleMapsUrl={property?.["Google Earth Image URL"]}
+            address={property?.Address}
+          />
+        </div>
 
-  {/* Map (Right) */}
-  <div className="w-full md:w-1/2 rounded-lg overflow-hidden">
-    {property?.LATITUDE && property?.LONGITUDE ? (
-      <div className="h-96">
-        <MapComponent
-          latitude={property.LATITUDE}
-          longitude={property.LONGITUDE}
-          zoom={12}
-        />
+        {/* Map (Right) */}
+        <div className="w-full md:w-1/2 rounded-lg overflow-hidden">
+          {property?.LATITUDE && property?.LONGITUDE ? (
+            <div className="h-96">
+              <MapComponent
+                latitude={property.LATITUDE}
+                longitude={property.LONGITUDE}
+                zoom={12}
+              />
+            </div>
+          ) : (
+            <div className="flex justify-center items-center h-96">
+              <Loader2 className="animate-spin w-8 h-8" />
+            </div>
+          )}
+        </div>
       </div>
-    ) : (
-      <div className="flex justify-center items-center h-96">
-        <Loader2 className="animate-spin w-8 h-8" />
-      </div>
-    )}
-  </div>
-</div>
-
 
       {/* Action History Table */}
       <div className="bg-white rounded-lg shadow-lg overflow-hidden">

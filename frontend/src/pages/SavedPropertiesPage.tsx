@@ -9,34 +9,22 @@ import {
 import { Button } from "../components/ui/button";
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { Loader2 } from "lucide-react";
 import { downloadFile } from "../utils/downloadFiles";
 import { useToast } from "../hooks/use-toast";
 import { PropertyDetails } from "../types/propertyTypes";
-import { Badge } from "../components/ui/badge";
-import { useNavigate } from "react-router-dom";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "../components/ui/table";
 import { useUser } from "../hooks/useUser";
+import PropertyTable from "../components/propertyListing/PropertyTable";
+
 
 const SavedPropertiesPage = () => {
   const [savedProperties, setSavedProperties] = useState<PropertyDetails[]>([]);
   const [searchInput, setSearchInput] = useState("");
-  const [loadingPropertyId, setLoadingPropertyId] = useState<string | null>(
-    null
-  ); // Track the property being unsaved
-  const [rowsToShow, setRowsToShow] = useState(10);
-  const navigate = useNavigate();
+  const [loadingPropertyId, setLoadingPropertyId] = useState<string | null>(null);
   const { toast } = useToast();
   const { setUser } = useUser();
-
+  const [isLoading, setIsLoading] = useState(true);
   const fetchSavedProps = async () => {
+    setIsLoading(true);
     try {
       const res = await axios.get(
         `${process.env.REACT_APP_API_BASE_URL}/saved-properties`,
@@ -51,13 +39,14 @@ const SavedPropertiesPage = () => {
     } catch (err) {
       console.log(err);
     }
+    finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
     fetchSavedProps();
   }, []);
-
-  console.log(savedProperties);
 
   const filteredProperties = savedProperties.filter((property) => {
     const searchTerm = searchInput.toLowerCase();
@@ -80,7 +69,7 @@ const SavedPropertiesPage = () => {
   });
 
   const unsaveProperty = async (propertyId: string) => {
-    setLoadingPropertyId(propertyId); // Set the current property ID as loading
+    setLoadingPropertyId(propertyId);
     try {
       await axios.post(
         `${process.env.REACT_APP_API_BASE_URL}/property/unsave`,
@@ -107,7 +96,7 @@ const SavedPropertiesPage = () => {
           return {
             ...prevUser,
             savedProperties: prevUser.savedProperties.filter(
-              (id) => id !== propertyId // Remove from savedProperties list
+              (id) => id !== propertyId
             ),
           };
         }
@@ -116,18 +105,14 @@ const SavedPropertiesPage = () => {
     } catch (err) {
       console.error("Error unsaving property:", err);
     } finally {
-      setLoadingPropertyId(null); // Reset the loading state
+      setLoadingPropertyId(null);
     }
-  };
-
-  const handleSeeMore = () => {
-    setRowsToShow(rowsToShow + rowsToShow);
   };
 
   return (
     <div className="my-10">
       <div className="mx-4 md:mx-20">
-        <div className="flex items-center space-x-2 mx-auto">
+        <div className="flex items-center space-x-2 mx-auto mb-8">
           <Input
             type="text"
             className="h-12 placeholder:text-gray-500 font-medium"
@@ -156,125 +141,13 @@ const SavedPropertiesPage = () => {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-        <div className="my-8 overflow-x-auto rounded-lg border border-gray-300">
-          <Table className="min-w-full">
-            <TableHeader>
-              <TableRow>
-                <TableHead className="border border-gray-300 min-w-[150px] max-w-[150px]">
-                  Actions
-                </TableHead>
-                <TableHead className="border border-gray-300 min-w-[200px] max-w-[200px]">
-                  Address
-                </TableHead>
-                <TableHead className="border border-gray-300 min-w-[180px] max-w-[180px]">
-                  Mortgage Balance
-                </TableHead>
-                <TableHead className="border border-gray-300 min-w-[180px] max-w-[180px]">
-                  Tax Assessed Value
-                </TableHead>
-                <TableHead className="border border-gray-300 min-w-[180px] max-w-[180px]">
-                  Estimated Value
-                </TableHead>
-                <TableHead className="border border-gray-300 min-w-[180px] max-w-[180px]">
-                  Parcel Number
-                </TableHead>
-                <TableHead className="border border-gray-300 min-w-[150px] max-w-[150px]">
-                  Owner Occupancy
-                </TableHead>
-              </TableRow>
-            </TableHeader>
 
-            <TableBody>
-              {filteredProperties.length > 0 ? (
-                filteredProperties.slice(0, rowsToShow).map((property) => (
-                  <TableRow
-                    key={property._id as string}
-                    className="cursor-pointer"
-                  >
-                    <TableCell className="border border-gray-300 min-w-[150px] max-w-[150px]">
-                      <Button
-                        variant={"outline"}
-                        className="w-full truncate"
-                        onClick={() => unsaveProperty(property?._id as string)}
-                      >
-                        {loadingPropertyId === property._id ? (
-                          <>
-                            Unsaving...{" "}
-                            <Loader2 className="animate-spin ml-1" />
-                          </>
-                        ) : (
-                          "Unsave"
-                        )}
-                      </Button>
-                    </TableCell>
-                    <TableCell
-                      className="border border-gray-300 min-w-[200px] max-w-[200px] truncate"
-                      onClick={() =>
-                        navigate(`/property-details/${property?.ID}`)
-                      }
-                    >
-                      {property?.MAIL_ADDRESS_STREET}
-                    </TableCell>
-                    <TableCell
-                      className="border border-gray-300 min-w-[180px] max-w-[180px] truncate"
-                      onClick={() =>
-                        navigate(`/property-details/${property?.ID}`)
-                      }
-                    >
-                      {property["Opening Bid/Mortgage Balance"] || "-"}
-                    </TableCell>
-                    <TableCell
-                      className="border border-gray-300 min-w-[180px] max-w-[180px] truncate"
-                      onClick={() =>
-                        navigate(`/property-details/${property?.ID}`)
-                      }
-                    >
-                      {property?.ASSESSED_VALUE}
-                    </TableCell>
-                    <TableCell
-                      className="border border-gray-300 min-w-[180px] max-w-[180px] truncate"
-                      onClick={() =>
-                        navigate(`/property-details/${property?.ID}`)
-                      }
-                    >
-                      {property?.ESTIMATED_VALUE}
-                    </TableCell>
-                    <TableCell
-                      className="border border-gray-300 min-w-[180px] max-w-[180px] truncate"
-                      onClick={() =>
-                        navigate(`/property-details/${property?.ID}`)
-                      }
-                    >
-                      {property["Parcel Number"]}
-                    </TableCell>
-                    <TableCell
-                      className="border border-gray-300 min-w-[150px] max-w-[150px] truncate"
-                      onClick={() =>
-                        navigate(`/property-details/${property?.ID}`)
-                      }
-                    >
-                      <Badge variant={"outline"}>
-                        {property?.OWNER_OCCUPANCY}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center">
-                    No matching properties found
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
-
-        {filteredProperties.length > rowsToShow && (
-          <div className="mt-4 text-center">
-            <Button onClick={handleSeeMore}>See More</Button>
-          </div>
-        )}
+        <PropertyTable
+          data={filteredProperties}
+          onUnsave={unsaveProperty}
+          loadingPropertyId={loadingPropertyId}
+          isLoading={isLoading}
+        />
       </div>
     </div>
   );

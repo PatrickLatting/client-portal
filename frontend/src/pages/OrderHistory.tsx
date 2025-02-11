@@ -9,6 +9,23 @@ import {
 import { useUser } from "../hooks/useUser";
 import { useState } from "react";
 
+// Define a type for the possible action types
+type ActionType = "imageRequest" | "titleRequest" | "bid";
+
+// Helper function to format action type display text
+const getActionTypeDisplay = (actionType: ActionType): string => {
+  switch (actionType) {
+    case "imageRequest":
+      return "Image Request";
+    case "titleRequest":
+      return "Title Request";
+    case "bid":
+      return "Bid";
+    default:
+      return actionType; // TypeScript will ensure we never reach this
+  }
+};
+
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
   return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
@@ -16,14 +33,13 @@ const formatDate = (dateString: string) => {
 
 const OrderHistory = () => {
   const { user } = useUser();
-  const [searchInput, setSearchInput] = useState(""); // State for search input
+  const [searchInput, setSearchInput] = useState("");
   const [rowsToShow, setRowsToShow] = useState(10);
 
   if (!user) {
     return <div>Data not found</div>;
   }
 
-  // Handle search functionality
   const filteredActions = user.propertiesActions.filter((action) => {
     const searchTerm = searchInput.toLowerCase();
     return (
@@ -33,7 +49,7 @@ const OrderHistory = () => {
       (action.updated && action.updated.toString().includes(searchTerm))
     );
   });
- console.log(filteredActions);
+
   const handleSeeMore = () => {
     setRowsToShow(rowsToShow + rowsToShow);
   };
@@ -59,15 +75,9 @@ const OrderHistory = () => {
           <TableHeader className="font-semibold bg-[#fafafa]">
             <TableRow>
               <TableCell className="border border-gray-300">Address</TableCell>
-              <TableCell className="border border-gray-300">
-                Action Type
-              </TableCell>
-              <TableCell className="border border-gray-300">
-                Bid Amount
-              </TableCell>
-              <TableCell className="border border-gray-300">
-                Date & Time
-              </TableCell>
+              <TableCell className="border border-gray-300">Action Type</TableCell>
+              <TableCell className="border border-gray-300">Bid Amount</TableCell>
+              <TableCell className="border border-gray-300">Date & Time</TableCell>
               <TableCell className="border border-gray-300">Updated</TableCell>
             </TableRow>
           </TableHeader>
@@ -79,9 +89,7 @@ const OrderHistory = () => {
                     {action.address}
                   </TableCell>
                   <TableCell className="border border-gray-300">
-                    {action.actionType === "imageRequest"
-                      ? "Image Request"
-                      : "Bid"}
+                    {getActionTypeDisplay(action.actionType as ActionType)}
                   </TableCell>
                   <TableCell className="border border-gray-300">
                     {action.bidAmount}
@@ -105,7 +113,7 @@ const OrderHistory = () => {
         </Table>
         {filteredActions.length > rowsToShow && (
           <div className="m-4 text-center">
-            <Button onClick={handleSeeMore} variant={"outline"}>
+            <Button onClick={handleSeeMore} variant="outline">
               See More
             </Button>
           </div>

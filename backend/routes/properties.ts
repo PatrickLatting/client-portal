@@ -13,15 +13,39 @@ propertiesRouter.get("/get-properties", async (req: Request, res: Response) => {
     const limit = 15;
     const skip = (page - 1) * limit;
 
-    const search = (req.query.search as string) || ""; // Search query
+    const search = (req.query.search as string) || "";
     const county = (req.query.county as string) || "";
     const propertyType = (req.query.propertyType as string) || "";
     const ownerType = (req.query.ownerType as string) || "";
     const state = (req.query.state as string) || "";
+    const ownerOccupancy = (req.query.ownerOccupancy as string) || "";
+
+    // Get date parameters directly as strings
+    const fromDate = (req.query.fromDate as string) || undefined;
+    const toDate = (req.query.toDate as string) || undefined;
+
+    // Log incoming date parameters
+    // console.log("Incoming date parameters:", { fromDate, toDate });
+
+    const yearBuiltFrom = parseInt(req.query.yearBuiltFrom as string, 10);
+    const yearBuiltTo = parseInt(req.query.yearBuiltTo as string, 10);
+    const estimatedFrom = parseFloat(req.query.estimatedFrom as string);
+    const estimatedTo = parseFloat(req.query.estimatedTo as string);
 
     const filter: any = {};
 
-    // Handle `search` query: searches in both `ADDRESS_FROM_INPUT` and `County`
+    // Handle date range filter (SALE_DATE_1) - using string comparison
+    if (fromDate || toDate) {
+      filter.SALE_DATE_1 = {};
+      if (fromDate) {
+        filter.SALE_DATE_1.$gte = fromDate;
+      }
+      if (toDate) {
+        filter.SALE_DATE_1.$lte = toDate;
+      }
+    }
+
+    // Handle search query
     if (search && search !== "") {
       filter.$or = [
         { Address: { $regex: search, $options: "i" } },
@@ -29,7 +53,7 @@ propertiesRouter.get("/get-properties", async (req: Request, res: Response) => {
       ];
     }
 
-    // Handle `county` query: filters only by `County`
+    // Handle county query
     if (county && county !== "") {
       const counties = county.split(",").map((item) => item.trim());
       filter.County = {
@@ -37,7 +61,7 @@ propertiesRouter.get("/get-properties", async (req: Request, res: Response) => {
       };
     }
 
-    // Handle `propertyType` query: filters by `LAND_USE`
+    // Handle property type query
     if (propertyType && propertyType !== "") {
       const propertyTypes = propertyType.split(",").map((item) => item.trim());
       filter.LAND_USE = {
@@ -45,7 +69,7 @@ propertiesRouter.get("/get-properties", async (req: Request, res: Response) => {
       };
     }
 
-    // Handle `ownerType` query: filters by `OWNERSHIP_TYPE`
+    // Handle owner type query
     if (ownerType && ownerType !== "") {
       const ownerTypes = ownerType.split(",").map((item) => item.trim());
       filter.OWNERSHIP_TYPE = {
@@ -53,13 +77,48 @@ propertiesRouter.get("/get-properties", async (req: Request, res: Response) => {
       };
     }
 
-    // Handle `state` query: filters by `State`
+    // Handle state query
     if (state && state !== "") {
       const states = state.split(",").map((item) => item.trim());
       filter.State = {
         $in: states.map((stateItem) => new RegExp(stateItem, "i")),
       };
     }
+
+    // Handle owner occupancy query
+    if (ownerOccupancy && ownerOccupancy !== "") {
+      const ownerOccupancies = ownerOccupancy
+        .split(",")
+        .map((item) => item.trim());
+      filter.OWNER_OCCUPANCY = {
+        $in: ownerOccupancies.map((occupancy) => new RegExp(occupancy, "i")),
+      };
+    }
+
+    // Handle year built filter
+    if (!isNaN(yearBuiltFrom) || !isNaN(yearBuiltTo)) {
+      filter.YEAR_BUILT = {};
+      if (!isNaN(yearBuiltFrom)) {
+        filter.YEAR_BUILT.$gte = yearBuiltFrom;
+      }
+      if (!isNaN(yearBuiltTo)) {
+        filter.YEAR_BUILT.$lte = yearBuiltTo;
+      }
+    }
+
+    // Handle estimated value filter
+    if (!isNaN(estimatedFrom) || !isNaN(estimatedTo)) {
+      filter.ESTIMATED_VALUE = {};
+      if (!isNaN(estimatedFrom)) {
+        filter.ESTIMATED_VALUE.$gte = estimatedFrom;
+      }
+      if (!isNaN(estimatedTo)) {
+        filter.ESTIMATED_VALUE.$lte = estimatedTo;
+      }
+    }
+
+    // Log the final filter for debugging
+    // console.log("Final filter:", JSON.stringify(filter, null, 2));
 
     // Execute queries
     const [
@@ -69,6 +128,7 @@ propertiesRouter.get("/get-properties", async (req: Request, res: Response) => {
       allPropertyTypes,
       allOwnerTypes,
       allStates,
+      allOwnerOccupancy,
     ] = await Promise.all([
       Properties.find(filter).skip(skip).limit(limit),
       Properties.countDocuments(filter),
@@ -76,6 +136,7 @@ propertiesRouter.get("/get-properties", async (req: Request, res: Response) => {
       Properties.distinct("LAND_USE"),
       Properties.distinct("OWNERSHIP_TYPE"),
       Properties.distinct("State"),
+      Properties.distinct("OWNER_OCCUPANCY"),
     ]);
 
     // Return response
@@ -90,16 +151,16 @@ propertiesRouter.get("/get-properties", async (req: Request, res: Response) => {
       allOwnerTypes,
       allPropertyTypes,
       allStates,
+      allOwnerOccupancy,
     });
   } catch (err: any) {
-    console.error(err);
+    console.error("Error in get-properties:", err);
     res.status(500).json({
       message: "An error occurred while fetching properties.",
       error: err.message,
     });
   }
 });
-
 propertiesRouter.get(
   "/property-details/:propId",
   async (req: Request, res: Response) => {
@@ -136,16 +197,31 @@ propertiesRouter.post(
       }
 
       const userId = req.user?._id;
-      const { propertyId } = req.body;
+      const { propertyId, propertyIds } = req.body;
 
-      if (!propertyId) {
-        res.status(400).json({ error: "Property ID is required" });
+      // Check if either single propertyId or array of propertyIds is provided
+      if (!propertyId && !propertyIds) {
+        res.status(400).json({ error: "Property ID(s) are required" });
         return;
       }
 
+      // Convert single propertyId to array if provided
+      const propertiesToSave = propertyId 
+        ? [propertyId] 
+        : Array.isArray(propertyIds) 
+          ? propertyIds 
+          : [];
+
+      // Validate if propertyIds is an array when provided
+      if (propertyIds && !Array.isArray(propertyIds)) {
+        res.status(400).json({ error: "PropertyIds must be an array" });
+        return;
+      }
+
+      // Update user's saved properties
       const updatedUser = await User.findByIdAndUpdate(
         userId,
-        { $addToSet: { savedProperties: propertyId } },
+        { $addToSet: { savedProperties: { $each: propertiesToSave } } },
         { new: true }
       );
 
@@ -155,7 +231,9 @@ propertiesRouter.post(
       }
 
       res.status(200).json({
-        message: "Property saved successfully",
+        message: `${propertiesToSave.length} ${
+          propertiesToSave.length === 1 ? "property" : "properties"
+        } saved successfully`,
         savedProperties: updatedUser.savedProperties,
       });
     } catch (err: unknown) {
@@ -168,6 +246,52 @@ propertiesRouter.post(
   }
 );
 
+
+propertiesRouter.post(
+  "/property/save-multiple",
+  userAuth,
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const user = req.user;
+      if (!user) {
+        res.status(404).send("User not found");
+        return;
+      }
+
+      const userId = req.user?._id;
+      const { propertyIds } = req.body;
+
+      // Validate propertyIds array
+      if (!propertyIds || !Array.isArray(propertyIds) || propertyIds.length === 0) {
+        res.status(400).json({ error: "Valid property IDs array is required" });
+        return;
+      }
+
+      // Update user with multiple properties
+      const updatedUser = await User.findByIdAndUpdate(
+        userId,
+        { $addToSet: { savedProperties: { $each: propertyIds } } },
+        { new: true }
+      );
+
+      if (!updatedUser) {
+        res.status(404).json({ error: "User not found" });
+        return;
+      }
+
+      res.status(200).json({
+        message: `${propertyIds.length} properties saved successfully`,
+        savedProperties: updatedUser.savedProperties,
+      });
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        res.status(500).json({ error: err.message });
+      } else {
+        res.status(500).json({ error: "An unknown error occurred" });
+      }
+    }
+  }
+);
 propertiesRouter.post(
   "/property/unsave",
   userAuth,
@@ -289,6 +413,46 @@ propertiesRouter.post(
         }
       }
 
+      // Handle the "titleRequest" action type
+
+      if (actionType === "titleRequest") {
+        const existingTitleRequest = user.propertiesActions.find(
+          (action) =>
+            action.propertyId === propertyId &&
+            action.actionType === "titleRequest" &&
+            new Date().getTime() - new Date(action.date).getTime() < 60 * 1000 // 1 minute in milliseconds
+        );
+
+        if (existingTitleRequest) {
+          res.status(400).json({
+            message:
+              "You have already sent an title order request for this property. Please wait 1 minute before trying again.",
+          });
+          return;
+        }
+
+        // Send email notification for title order
+        const emailSubject = "New Title Request Received";
+        const emailText = `A user (${user.emailId}) has requested title for property located at ${address}.`;
+        const emailHtml = `<p>New title request details:</p>
+            <ul>
+              <li>User: ${user.emailId}</li>
+              <li>Property Address: ${address}</li>
+              <li>Request Time: ${new Date().toLocaleString()}</li>
+            </ul>`;
+
+        const emailSuccess = await sendMail({
+          to: `${process.env.EMAIL_USER}`,
+          subject: emailSubject,
+          text: emailText,
+          html: emailHtml,
+        });
+
+        if (!emailSuccess) {
+          console.error("Error sending email notification for title request.");
+        }
+      }
+
       // Handle the "bid" action type
       if (actionType === "bid") {
         // Send email notification for bid
@@ -373,13 +537,20 @@ propertiesRouter.get(
         return;
       }
 
-      // Ensure the savedProperties array is present and not empty
-      const savedPropertyIds = user.savedProperties.map(
-        (id: string) => new mongoose.Types.ObjectId(id)
-      );
+      // Filter out invalid ObjectIDs and convert valid ones
+      const savedPropertyIds = user.savedProperties
+        .filter((id: string) => {
+          try {
+            // Test if the ID is valid before using it
+            return mongoose.Types.ObjectId.isValid(id);
+          } catch {
+            return false;
+          }
+        })
+        .map((id: string) => new mongoose.Types.ObjectId(id));
 
       if (!savedPropertyIds || savedPropertyIds.length === 0) {
-        res.status(400).json({ message: "No saved properties found" });
+        res.status(200).json({ properties: [] });
         return;
       }
 
@@ -387,13 +558,6 @@ propertiesRouter.get(
       const properties = await Properties.find({
         _id: { $in: savedPropertyIds },
       });
-
-      if (properties.length === 0) {
-        res
-          .status(404)
-          .json({ message: "No properties found for the saved IDs" });
-        return;
-      }
 
       res.status(200).json({ properties });
       return;

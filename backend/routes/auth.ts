@@ -152,9 +152,9 @@ authRouter.post(
       });
 
       if (emailSent) {
-        res.status(200).send("Order mail send successfully");
+        res.status(200).send("Password reset mail send successfully");
       } else {
-        res.status(500).send("Failed to send order email.");
+        res.status(500).send("Failed to send password reset email.");
       }
     } catch (error: any) {
       res.status(500).send("Error: " + error.message);
