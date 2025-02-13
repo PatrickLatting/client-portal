@@ -167,7 +167,7 @@ propertiesRouter.get(
     try {
       const { propId } = req.params;
 
-      const property = await Properties.findOne({ ID: propId });
+      const property = await Properties.findOne({ _id: propId });
 
       if (!property) {
         res.status(404).json({ message: "Property not found" });

@@ -263,7 +263,8 @@ const { user, setUser } = useUser();
   }, [saveGridState]);
 
   const handleRowClick = (event: RowClickedEvent) => {
-    const rowData = event.data?.ID;
+    const rowData = event.data?._id;
+    console.log("Row clicked:", rowData);
     if (rowData) {
       navigate(`/property-details/${rowData}`);
     }
