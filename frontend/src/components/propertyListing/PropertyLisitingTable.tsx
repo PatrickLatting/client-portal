@@ -272,11 +272,19 @@ const { user, setUser } = useUser();
   // };
 
   const handleCellClicked = (event: CellClickedEvent) => {
-    // Only navigate if the click was not on the checkbox column
+    console.log("Clicked Column:", event.column.getColId());
+    console.log("Row Data:", event.data);
+    console.log("Extracted ID:", event.data?._id);
+
     if (!event.column.getColDef().checkboxSelection && event.data) {
-      navigate(`/property-details/${event.data._id}`);
+        if (event.data._id) {
+            console.log(`Navigating to /property-details/${event.data._id}`); // Debugging line
+            navigate(`/property-details/${event.data._id}`);
+        } else {
+            console.warn("No valid _id found. Navigation not triggered.");
+        }
     }
-  };
+};
 
   if (!data?.length) {
     return (

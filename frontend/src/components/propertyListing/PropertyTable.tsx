@@ -136,8 +136,8 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
       minWidth: 200,
     },
     {
-      headerName: "Mortgage Balance",
-      field: "Opening Bid/Mortgage Balance",
+      headerName: "Principal Amount Owed",
+      field: "Principal Amount Owed",
       valueFormatter,
       flex: 1,
       minWidth: 180,
@@ -171,15 +171,24 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
   ];
 
   const handleRowClick = (event: RowClickedEvent) => {
+    console.log("Row Clicked Event:", event); // Log the entire event
+
     const clickedColumn = event.api.getFocusedCell()?.column;
+    console.log("Clicked Column:", clickedColumn?.getColId()); // Log the clicked column ID
     if (clickedColumn?.getColId() === 'actions') {
+      console.log("Click was inside the 'Actions' column. Ignoring row click.");
       return;
     }
     
-    const rowData = event.data?.ID;
+    console.log("Row Data:", event.data); // Log the row data object
+    const rowData = event.data?._id;
+
     if (rowData) {
+      console.log(`Navigating to /property-details/${rowData}`);
       navigate(`/property-details/${rowData}`);
-    }
+    } else {
+      console.warn("No valid row ID found. Navigation not triggered.");
+  }
   };
 
   // Show loading skeleton
