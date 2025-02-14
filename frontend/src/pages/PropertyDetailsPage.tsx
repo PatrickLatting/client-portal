@@ -83,8 +83,7 @@ const PropertyDetailsPage = () => {
       setSaveLoading(false);
     }
   };
-
-
+  
   console.log("property", property);
   const unsaveProperty = async () => {
     setSaveLoading(true);
@@ -216,13 +215,38 @@ const PropertyDetailsPage = () => {
     },
   ];
 console.log(property);
-  if (loading) {
-    return (
-      <div className="flex justify-center w-full items-center h-screen">
-        <ForeclosureSkeleton />
-      </div>
-    );
-  }
+
+if (loading) {
+  return (
+    <div className="flex justify-center w-full items-center h-screen">
+      <ForeclosureSkeleton />
+    </div>
+  );
+}
+
+// Function to check if the property data is mostly empty
+const isPropertyDataIncomplete = (property: PropertyDetails | null) => {
+  if (!property) return true;
+
+  const importantFields = [
+    property.ESTIMATED_VALUE,
+    property.SQUARE_FEET,
+    property.BEDROOMS,
+    property.BATHROOMS,
+    property.STORIES,
+    property.LOT_ACRES,
+    property.YEAR_BUILT,
+    property.TAX_YEAR_1,
+  ];
+
+  return importantFields.every(
+    (value) =>
+      !value || 
+      String(value) === "N/A" || 
+      String(value) === "-" || 
+      String(value) === "Not Available"
+  );
+};
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-7xl">
@@ -273,18 +297,25 @@ console.log(property);
 
         {/* Property Details Header & Grid */}
         <section>
-          <h2 className="text-xl md:text-2xl font-semibold mb-4">
-            Property Details
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
-            {propertyDetailsSection.map((item, index) => (
-              <div key={index} className="space-y-2">
-                <div className="font-medium text-blue-900">{item.label}</div>
-                <div className="text-gray-700">{item.value || "-"}</div>
-              </div>
-            ))}
-          </div>
-        </section>
+      <h2 className="text-xl md:text-2xl font-semibold mb-4">Property Details</h2>
+      {propertyDetailsSection.every((item) => !item.value) ? (
+        <div className="text-center text-gray-700 text-lg py-6">
+          We're sorry, but information is not available for this property.
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
+          {propertyDetailsSection.map((item, index) => (
+            <div key={index} className="space-y-2">
+              <div className="font-medium text-blue-900">{item.label}</div>
+              <div className="text-gray-700">{item.value || "-"}</div>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+
+
+
 
         <hr className="border-t border-gray-200 my-4" />
 
@@ -308,96 +339,70 @@ console.log(property);
       {property && (
         <div className="mb-8 bg-white rounded-lg shadow-lg p-6 space-y-8">
           {/* Recent Sale History Table */}
-<section>
-  <h2 className="text-xl md:text-2xl font-semibold mb-4">
-    Recent Sale History
-  </h2>
-  <table className="w-full text-left border-collapse">
-    <thead className="border-b border-gray-300">
-      <tr>
-      </tr>
-    </thead>
-    <tbody>
-      <tr className="border-b border-gray-200">
-        {[
-          property?.SALE_DATE_1,
-          property?.SALE_DATE_2,
-          property?.SALE_DATE_3,
-          property?.SALE_DATE_4,
-          property?.SALE_DATE_5,
-        ].map((saleDate, index) => (
-          <td key={index} className="px-4 py-2">{saleDate || "N/A"}</td>
-        ))}
-      </tr>
-      <tr className="border-b border-gray-200">
-        {[
-          property?.AMOUNT_1,
-          property?.AMOUNT_2,
-          property?.AMOUNT_3,
-          property?.AMOUNT_4,
-          property?.AMOUNT_5,
-        ].map((amount, index) => (
-          <td key={index} className="px-4 py-2">
-            {amount
-              ? new Intl.NumberFormat("en-US", {
-                  style: "currency",
-                  currency: "USD",
-                }).format(Number(amount))
-              : "N/A"}
-          </td>
-        ))}
-      </tr>
-    </tbody>
-  </table>
+          <section>
+  <h2 className="text-xl md:text-2xl font-semibold mb-4">Recent Sale History</h2>
+  {![property?.SALE_DATE_1, property?.AMOUNT_1].some(Boolean) ? (
+    <div className="text-center text-gray-700 text-lg py-6">
+      We're sorry, but recent sale history information is not available.
+    </div>
+  ) : (
+    <table className="w-full text-left border-collapse">
+      <thead className="border-b border-gray-300">
+        <tr>
+          <th className="px-4 py-2">Sale Date</th>
+          <th className="px-4 py-2">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        {[property?.SALE_DATE_1, property?.SALE_DATE_2, property?.SALE_DATE_3, property?.SALE_DATE_4, property?.SALE_DATE_5].map(
+          (saleDate, index) => (
+            <tr key={index} className="border-b border-gray-200">
+              <td className="px-4 py-2">{saleDate || "N/A"}</td>
+              <td className="px-4 py-2">
+                {property?.[`AMOUNT_${index + 1}` as keyof PropertyDetails]
+                  ? `$${Number(property[`AMOUNT_${index + 1}` as keyof PropertyDetails]).toLocaleString()}`
+                  : "N/A"}
+              </td>
+            </tr>
+          )
+        )}
+      </tbody>
+    </table>
+  )}
 </section>
 
+<section>
+  <h2 className="text-xl md:text-2xl font-semibold mb-4">Recent Assessment History</h2>
+  {![property?.TAX_YEAR_1, property?.ASSESSED_VALUE_1].some(Boolean) ? (
+    <div className="text-center text-gray-700 text-lg py-6">
+      We're sorry, but assessment history information is not available.
+    </div>
+  ) : (
+    <table className="w-full text-left border-collapse">
+      <thead className="border-b border-gray-300">
+        <tr>
+          <th className="px-4 py-2">Tax Year</th>
+          <th className="px-4 py-2">Assessed Value</th>
+        </tr>
+      </thead>
+      <tbody>
+        {[property?.TAX_YEAR_1, property?.TAX_YEAR_2, property?.TAX_YEAR_3, property?.TAX_YEAR_4, property?.TAX_YEAR_5].map(
+          (year, index) => (
+            <tr key={index} className="border-b border-gray-200">
+              <td className="px-4 py-2">{year || "N/A"}</td>
+              <td className="px-4 py-2">
+                {property?.[`ASSESSED_VALUE_${index + 1}` as keyof PropertyDetails]
+                  ? `$${Number(property[`ASSESSED_VALUE_${index + 1}` as keyof PropertyDetails]).toLocaleString()}`
+                  : "N/A"}
+              </td>
+            </tr>
+          )
+        )}
+      </tbody>
+    </table>
+  )}
+</section>
 
-          {/* Recent Assessment History Table (Horizontal Layout) */}
-          <section>
-            <h2 className="text-xl md:text-2xl font-semibold mb-4">
-              Recent Assessment History
-            </h2>
-
-            {property && (
-              <table className="w-full text-left border-collapse">
-                <thead className="border-b border-gray-300">
-                  <tr>
-                    {[
-                      property.TAX_YEAR_1,
-                      property.TAX_YEAR_2,
-                      property.TAX_YEAR_3,
-                      property.TAX_YEAR_4,
-                      property.TAX_YEAR_5,
-                    ].map((year, index) => (
-                      <th key={index} className="px-4 py-2 text-gray-700">
-                        {year || "N/A"}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr className="border-b border-gray-200">
-                    {[
-                      property.ASSESSED_VALUE_1,
-                      property.ASSESSED_VALUE_2,
-                      property.ASSESSED_VALUE_3,
-                      property.ASSESSED_VALUE_4,
-                      property.ASSESSED_VALUE_5,
-                    ].map((value, index) => (
-                      <td key={index} className="px-4 py-2">
-                        {value
-                          ? new Intl.NumberFormat("en-US", {
-                              style: "currency",
-                              currency: "USD",
-                            }).format(Number(value))
-                          : "N/A"}
-                      </td>
-                    ))}
-                  </tr>
-                </tbody>
-              </table>
-            )}
-          </section>
         </div>
       )}
 
