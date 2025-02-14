@@ -451,7 +451,7 @@ const PropertyListingPage = () => {
 
       <div className="text-center py-10 p-2">
         <h2 className="text-5xl font-semibold">
-          We're temporarily under maintenence
+          Search Foreclosures
         </h2>
         <p className="text-xl my-4">
           We offer the most comprehensive foreclosure database in the world.
