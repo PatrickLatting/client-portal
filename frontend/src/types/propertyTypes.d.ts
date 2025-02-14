@@ -71,8 +71,8 @@ export type PropertyDetails = {
   price_range_low: number;
   price_range_high: number;
   LOT_ACRES: number;
-  Google_Maps_Image_URL: string;
-  Google_Earth_Image_URL: string;
+  "Google Maps Image URL": string;
+  "Google Earth Image URL": string;
   OWNER_OCCUPANCY: boolean;
 
   // Comparable properties 1-10

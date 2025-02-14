@@ -131,7 +131,7 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
     },
     {
       headerName: "Address",
-      field: "MAIL_ADDRESS_STREET",
+      field: "Address",
       flex: 1,
       minWidth: 200,
     },

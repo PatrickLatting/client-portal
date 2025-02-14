@@ -215,7 +215,7 @@ const PropertyDetailsPage = () => {
         : "Not Available",
     },
   ];
-
+console.log(property);
   if (loading) {
     return (
       <div className="flex justify-center w-full items-center h-screen">
@@ -406,8 +406,8 @@ const PropertyDetailsPage = () => {
         {/* Image Carousel (Left) */}
         <div className="w-full md:w-1/2 rounded-lg overflow-hidden">
           <PropertyImageCarousel
-            googleEarthUrl={property?.["Google_Earth_Image_URL"]}
-            googleMapsUrl={property?.["Google_Maps_Image_URL"]}
+            googleEarthUrl={property?.["Google Earth Image URL"]}
+            googleMapsUrl={property?.["Google Maps Image URL"]}
             address={property?.Address}
           />
         </div>
