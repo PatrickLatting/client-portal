@@ -337,13 +337,13 @@ const { user, setUser } = useUser();
        
       )}
    
-    <div className="flex-1 bg-white rounded-xl border">
+   <div className="w-full h-[1050px] bg-white rounded-xl border">
       <AgGridReact
         ref={gridRef}
         rowData={data}
         columnDefs={generateColDefs()}
         defaultColDef={defaultColDef}
-        className="w-full h-full rounded-xl ag-theme-alpine"
+        className="w-full h-full rounded-xl ag-theme-alpine" 
         onGridReady={onGridReady}
         onCellClicked={handleCellClicked}
         onFilterChanged={saveGridState}
