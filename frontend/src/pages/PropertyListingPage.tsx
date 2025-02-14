@@ -552,7 +552,7 @@ const PropertyListingPage = () => {
                 storageKey="selectedPropertyTypes"
               />
             </Suspense>
-            <Suspense fallback={<Skeleton className="h-12" />}>
+            {/* <Suspense fallback={<Skeleton className="h-12" />}>
               <MultiSelector
                 key={selectedOwnerType.join(",")}
                 options={allOwnerTypes}
@@ -562,8 +562,8 @@ const PropertyListingPage = () => {
                 buttonWidth="w-full"
                 storageKey="selectedOwnerTypes"
               />
-            </Suspense>
-            <Suspense fallback={<Skeleton className="h-12" />}>
+            </Suspense> */}
+            {/* <Suspense fallback={<Skeleton className="h-12" />}>
               <MultiSelector
                 key={selectedOwnerOccupancy.join(",")}
                 options={allOwnerOccupancy}
@@ -573,7 +573,7 @@ const PropertyListingPage = () => {
                 buttonWidth="w-full"
                 storageKey="selectedOwnerOccupancy"
               />
-            </Suspense>
+            </Suspense> */}
             <Suspense fallback={<Skeleton className="h-12" />}>
               <DateRangePicker
                 date={selectedDataRange}
