@@ -51,20 +51,11 @@ const SavedPropertiesPage = () => {
   const filteredProperties = savedProperties.filter((property) => {
     const searchTerm = searchInput.toLowerCase();
     return (
-      property?.MAIL_ADDRESS_STREET?.toLowerCase().includes(searchTerm) ||
-      property["Opening Bid/Mortgage Balance"]
-        ?.toString()
-        .toLowerCase()
-        .includes(searchTerm) ||
-      property?.ASSESSED_VALUE?.toString().toLowerCase().includes(searchTerm) ||
-      property?.ESTIMATED_VALUE?.toString()
-        .toLowerCase()
-        .includes(searchTerm) ||
+      property?.Address?.toLowerCase().includes(searchTerm) ||
       property["Parcel Number"]
         ?.toString()
         .toLowerCase()
-        .includes(searchTerm) ||
-      property?.OWNER_OCCUPANCY?.toLowerCase().includes(searchTerm)
+        .includes(searchTerm)
     );
   });
 

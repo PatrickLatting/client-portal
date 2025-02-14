@@ -172,11 +172,8 @@ const PropertyDetailsPage = () => {
     { label: "Stories", value: property?.STORIES },
     { label: "Lot Acres", value: property?.LOT_ACRES },
     { label: "Year Built", value: property?.YEAR_BUILT },
-    { label: "Effective Year Built", value: property?.EFFECTIVE_YEAR_BUILT },
-    { label: "HOA?", value: property?.HOA_PRESENT === 1 ? "Yes" : "No" },
-    { label: "Tax Amount", value: property?.["TAX_AMOUNT"] },
-    { label: "Zoning", value: property?.ZONING },
-    { label: "School District", value: property?.SCHOOL_DISCTRICT },
+    { label: "Effective Year Built", value: property?.YEAR_BUILT },
+    { label: "Tax Amount", value: property?.TAX_YEAR_1},
   ];
 
   const foreclosureDetailsSection = [
@@ -205,9 +202,8 @@ const PropertyDetailsPage = () => {
   ];
 
   const ownershipDetailsSection = [
-    { label: "Owner Name(s)", value: property?.OWNER_1_FULL_NAME },
-    { label: "Properties Owned", value: property?.PROPERTIES_OWNED },
-    { label: "Occupancy", value: property?.OWNER_OCCUPANCY },
+    { label: "Borrower Name(s)", value: property?.["Borrower Name(s)"] },
+    { label: "Owner Occupied?", value: property?.OWNER_OCCUPANCY ? "Yes" : "No" },
     { label: "Last Purchased", value: property?.SALE_DATE_1 },
     {
       label: "Years of Ownership",
@@ -312,93 +308,49 @@ const PropertyDetailsPage = () => {
       {property && (
         <div className="mb-8 bg-white rounded-lg shadow-lg p-6 space-y-8">
           {/* Recent Sale History Table */}
-          <section>
-            <h2 className="text-xl md:text-2xl font-semibold mb-4">
-              Recent Sale History
-            </h2>
-            <table className="w-full text-left border-collapse">
-              <thead className="border-b border-gray-300">
-                <tr>
-                  <th className="px-4 py-2 text-gray-700">Sale Date</th>
-                  <th className="px-4 py-2 text-gray-700">Amount</th>
-                  <th className="px-4 py-2 text-gray-700">Buyer</th>
-                  <th className="px-4 py-2 text-gray-700">Seller</th>
-                  <th className="px-4 py-2 text-gray-700">Transaction Type</th>
-                  <th className="px-4 py-2 text-gray-700">Document Type</th>
-                </tr>
-              </thead>
-              <tbody>
-                {[
-                  {
-                    saleDate: property?.SALE_DATE_1,
-                    amount: property?.AMOUNT_1,
-                    buyer: property?.BUYER_1,
-                    seller: property?.SELLER_1,
-                    transactionType: property?.TRANSACTION_TYPE_1,
-                    documentType: property?.DOCUMENT_TYPE_1,
-                  },
-                  {
-                    saleDate: property?.SALE_DATE_2,
-                    amount: property?.AMOUNT_2,
-                    buyer: property?.BUYER_2,
-                    seller: property?.SELLER_2,
-                    transactionType: property?.TRANSACTION_TYPE_2,
-                    documentType: property?.DOCUMENT_TYPE_2,
-                  },
-                  {
-                    saleDate: property?.SALE_DATE_3,
-                    amount: property?.AMOUNT_3,
-                    buyer: property?.BUYER_3,
-                    seller: property?.SELLER_3,
-                    transactionType: property?.TRANSACTION_TYPE_3,
-                    documentType: property?.DOCUMENT_TYPE_3,
-                  },
-                  {
-                    saleDate: property?.SALE_DATE_4,
-                    amount: property?.AMOUNT_4,
-                    buyer: property?.BUYER_4,
-                    seller: property?.SELLER_4,
-                    transactionType: property?.TRANSACTION_TYPE_4,
-                    documentType: property?.DOCUMENT_TYPE_4,
-                  },
-                  {
-                    saleDate: property?.SALE_DATE_5,
-                    amount: property?.AMOUNT_5,
-                    buyer: property?.BUYER_5,
-                    seller: property?.SELLER_5,
-                    transactionType: property?.TRANSACTION_TYPE_5,
-                    documentType: property?.DOCUMENT_TYPE_5,
-                  },
-                  {
-                    saleDate: property?.SALE_DATE_6,
-                    amount: property?.AMOUNT_6,
-                    buyer: property?.BUYER_6,
-                    seller: "N/A",
-                    transactionType: property?.TRANSACTION_TYPE_6,
-                    documentType: property?.DOCUMENT_TYPE_6,
-                  },
-                ].map((sale, index) => (
-                  <tr key={index} className="border-b border-gray-200">
-                    <td className="px-4 py-2">{sale.saleDate || "N/A"}</td>
-                    <td className="px-4 py-2">
-                      {sale.amount
-                        ? new Intl.NumberFormat("en-US", {
-                            style: "currency",
-                            currency: "USD",
-                          }).format(Number(sale.amount))
-                        : "N/A"}
-                    </td>
-                    <td className="px-4 py-2">{sale.buyer || "N/A"}</td>
-                    <td className="px-4 py-2">{sale.seller || "N/A"}</td>
-                    <td className="px-4 py-2">
-                      {sale.transactionType || "N/A"}
-                    </td>
-                    <td className="px-4 py-2">{sale.documentType || "N/A"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </section>
+<section>
+  <h2 className="text-xl md:text-2xl font-semibold mb-4">
+    Recent Sale History
+  </h2>
+  <table className="w-full text-left border-collapse">
+    <thead className="border-b border-gray-300">
+      <tr>
+      </tr>
+    </thead>
+    <tbody>
+      <tr className="border-b border-gray-200">
+        {[
+          property?.SALE_DATE_1,
+          property?.SALE_DATE_2,
+          property?.SALE_DATE_3,
+          property?.SALE_DATE_4,
+          property?.SALE_DATE_5,
+        ].map((saleDate, index) => (
+          <td key={index} className="px-4 py-2">{saleDate || "N/A"}</td>
+        ))}
+      </tr>
+      <tr className="border-b border-gray-200">
+        {[
+          property?.AMOUNT_1,
+          property?.AMOUNT_2,
+          property?.AMOUNT_3,
+          property?.AMOUNT_4,
+          property?.AMOUNT_5,
+        ].map((amount, index) => (
+          <td key={index} className="px-4 py-2">
+            {amount
+              ? new Intl.NumberFormat("en-US", {
+                  style: "currency",
+                  currency: "USD",
+                }).format(Number(amount))
+              : "N/A"}
+          </td>
+        ))}
+      </tr>
+    </tbody>
+  </table>
+</section>
+
 
           {/* Recent Assessment History Table (Horizontal Layout) */}
           <section>
@@ -454,8 +406,8 @@ const PropertyDetailsPage = () => {
         {/* Image Carousel (Left) */}
         <div className="w-full md:w-1/2 rounded-lg overflow-hidden">
           <PropertyImageCarousel
-            googleEarthUrl={property?.["Google Maps Image URL"]}
-            googleMapsUrl={property?.["Google Earth Image URL"]}
+            googleEarthUrl={property?.["Google_Earth_Image_URL"]}
+            googleMapsUrl={property?.["Google_Maps_Image_URL"]}
             address={property?.Address}
           />
         </div>
@@ -477,6 +429,58 @@ const PropertyDetailsPage = () => {
           )}
         </div>
       </div>
+
+    {/* Comparable Properties Table */}
+<section>
+  <h2 className="text-xl md:text-2xl font-semibold mb-4">Comparable Properties</h2>
+  <table className="w-full text-left border-collapse">
+    <thead className="border-b border-gray-300">
+      <tr>
+        <th className="px-4 py-2 text-gray-700">Address</th>
+        <th className="px-4 py-2 text-gray-700">Price</th>
+        <th className="px-4 py-2 text-gray-700">Bedrooms</th>
+        <th className="px-4 py-2 text-gray-700">Bathrooms</th>
+        <th className="px-4 py-2 text-gray-700">Lot Size (Acres)</th>
+        <th className="px-4 py-2 text-gray-700">Sqft</th>
+        <th className="px-4 py-2 text-gray-700">Year Built</th>
+        <th className="px-4 py-2 text-gray-700">Distance (mi)</th>
+        <th className="px-4 py-2 text-gray-700">Listing Type</th>
+        <th className="px-4 py-2 text-gray-700">Last Seen</th>
+        <th className="px-4 py-2 text-gray-700">Days on Market</th>
+      </tr>
+    </thead>
+    <tbody>
+      {Array.from({ length: 10 }, (_, i) => {
+        const index = i + 1; // 1-based index
+        return (
+          <tr key={index} className="border-b border-gray-200">
+            <td className="px-4 py-2">{String(property?.[`COMPARABLE_FORMATTEDADDRESS_${index}` as keyof PropertyDetails] ?? "N/A")}</td>
+            <td className="px-4 py-2">
+              {property?.[`COMPARABLE_PRICE_${index}` as keyof PropertyDetails]
+                ? `$${Math.round(Number(property[`COMPARABLE_PRICE_${index}` as keyof PropertyDetails])).toLocaleString()}`
+                : "N/A"}
+            </td>
+            <td className="px-4 py-2">{String(property?.[`COMPARABLE_BEDROOMS_${index}` as keyof PropertyDetails] ?? "N/A")}</td>
+            <td className="px-4 py-2">{String(property?.[`COMPARABLE_BATHROOMS_${index}` as keyof PropertyDetails] ?? "N/A")}</td>
+            <td className="px-4 py-2">
+              {property?.[`COMPARABLE_LOTSIZE_${index}` as keyof PropertyDetails]
+                ? (Number(property[`COMPARABLE_LOTSIZE_${index}` as keyof PropertyDetails]) / 43560).toFixed(2)
+                : "N/A"}
+            </td>
+            <td className="px-4 py-2">{String(property?.[`COMPARABLE_SQUAREFOOTAGE_${index}` as keyof PropertyDetails] ?? "N/A")}</td>
+            <td className="px-4 py-2">{String(property?.[`COMPARABLE_YEARBUILT_${index}` as keyof PropertyDetails] ?? "N/A")}</td>
+            <td className="px-4 py-2">{String(property?.[`COMPARABLE_DISTANCE_${index}` as keyof PropertyDetails] ?? "N/A")}</td>
+            <td className="px-4 py-2">{String(property?.[`COMPARABLE_LISTINGTYPE_${index}` as keyof PropertyDetails] ?? "N/A")}</td>
+            <td className="px-4 py-2">{String(property?.[`COMPARABLE_LASTSEENDATE_${index}` as keyof PropertyDetails] ?? "N/A")}</td>
+            <td className="px-4 py-2">{String(property?.[`COMPARABLE_DAYSONMARKET_${index}` as keyof PropertyDetails] ?? "N/A")}</td>
+          </tr>
+        );
+      })}
+    </tbody>
+  </table>
+</section>
+
+
 
       {/* Action History Table */}
       <div className="bg-white rounded-lg shadow-lg overflow-hidden">
