@@ -84,6 +84,8 @@ const PropertyDetailsPage = () => {
     }
   };
 
+
+  console.log("property", property);
   const unsaveProperty = async () => {
     setSaveLoading(true);
     try {

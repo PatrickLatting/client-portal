@@ -10,6 +10,7 @@ import {
   ColumnState,
   FilterModel,
   SelectionChangedEvent,
+  CellClickedEvent,
 } from 'ag-grid-community';
 import { useNavigate } from 'react-router-dom';
 import { PropertyDetails } from '../../types/propertyTypes';
@@ -262,11 +263,18 @@ const { user, setUser } = useUser();
     };
   }, [saveGridState]);
 
-  const handleRowClick = (event: RowClickedEvent) => {
-    const rowData = event.data?._id;
-    console.log("Row clicked:", rowData);
-    if (rowData) {
-      navigate(`/property-details/${rowData}`);
+  // const handleRowClick = (event: RowClickedEvent) => {
+  //   const rowData = event.data;
+  //   console.log("Row clicked:", rowData);
+  //   if (rowData) {
+  //     navigate(`/property-details/${rowData}`);
+  //   }
+  // };
+
+  const handleCellClicked = (event: CellClickedEvent) => {
+    // Only navigate if the click was not on the checkbox column
+    if (!event.column.getColDef().checkboxSelection && event.data) {
+      navigate(`/property-details/${event.data._id}`);
     }
   };
 
@@ -329,7 +337,7 @@ const { user, setUser } = useUser();
         defaultColDef={defaultColDef}
         className="w-full h-full rounded-xl ag-theme-alpine"
         onGridReady={onGridReady}
-        onRowClicked={handleRowClick}
+        onCellClicked={handleCellClicked}
         onFilterChanged={saveGridState}
         onSortChanged={saveGridState}
         pagination={false}

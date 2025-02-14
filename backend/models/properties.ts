@@ -1,9 +1,7 @@
 const mongoose = require("mongoose");
 
 const propertySchema = new mongoose.Schema({
-  _id: {
-    $oid: String,
-  },
+ 
   Address: { type: String, index: true },
   ID: Number,
   ASSESSED_VALUE: Number,
