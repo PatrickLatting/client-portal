@@ -304,7 +304,7 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
         columnDefs={columnDefs}
         className="w-full h-full rounded-xl ag-theme-alpine"
         onRowClicked={handleRowClick}
-        pagination={false}
+        pagination={true}
         paginationPageSize={10}
         suppressCellFocus={true}
       />
