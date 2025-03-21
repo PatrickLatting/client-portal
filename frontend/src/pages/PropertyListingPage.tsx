@@ -25,10 +25,10 @@ const MultiSelector = lazy(
 const PropertyListingTable = lazy(
   () => import("../components/propertyListing/PropertyLisitingTable")
 );
-
 const DateRangePicker = lazy(
   () => import("../components/propertyListing/DateRangePicker")
 );
+// Pagination is now integrated within the PropertyListingTable component
 
 const PropertyListingPage = () => {
   const selectedColumns = [
@@ -52,10 +52,13 @@ const PropertyListingPage = () => {
   const [searchInput, setSearchInput] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [properties, setProperties] = useState<PropertyDetails[]>([]);
-  const [loading, setLoading] = useState(true); // Start with loading true
+  const [loading, setLoading] = useState(true);
   const [initialLoad, setInitialLoad] = useState(true);
-  const [hasMore, setHasMore] = useState(true);
-  const [page, setPage] = useState(1);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [itemsPerPage] = useState(25); // Set to match the table's paginationPageSize
 
   const [allCounties, setAllCounties] = useState<
     { label: string; value: string }[]
@@ -187,12 +190,10 @@ const PropertyListingPage = () => {
   });
 
   const { user } = useUser();
-  console.log("properties", properties);
-  // Optimized fetch function with error handling and retry logic
-  const fetchMoreProperties = useCallback(
-    async (isNewSearch = false) => {
-      if (!isNewSearch && (loading || !hasMore)) return;
 
+  // Fetch properties based on current page and filters
+  const fetchProperties = useCallback(
+    async () => {
       setLoading(true);
       try {
         const fromDate = selectedDataRange?.from
@@ -202,10 +203,10 @@ const PropertyListingPage = () => {
           ? format(selectedDataRange.to, "M/d/yyyy")
           : undefined;
 
-        console.log("Date Range:", { fromDate, toDate }); // Add this for debugging
         const queryParams = new URLSearchParams({
           search: debouncedSearch,
-          page: isNewSearch ? "1" : page.toString(),
+          page: currentPage.toString(),
+          limit: itemsPerPage.toString(), // Add items per page
           ...(selectedCounty.length && { county: selectedCounty.join(",") }),
           ...(selectedState.length && { state: selectedState.join(",") }),
           ...(selectedOwnerType.length && {
@@ -230,27 +231,16 @@ const PropertyListingPage = () => {
             estimatedTo: selectedEstimatedValue.to,
           }),
         });
-        console.log(
-          "API URL:",
-          `${process.env.REACT_APP_API_BASE_URL}/get-properties?${queryParams}`
-        );
+        
         const res = await axios.get(
           `${process.env.REACT_APP_API_BASE_URL}/get-properties?${queryParams}`
         );
 
-        const newProperties = res.data.data;
-        if (isNewSearch) {
-          setProperties(newProperties);
-          setPage(2); // Reset to page 2 since we just loaded page 1
-        } else {
-          setProperties((prev) => [...prev, ...newProperties]);
-          setPage((prev) => prev + 1);
-        }
+        setProperties(res.data.data);
+        setTotalPages(res.data.meta.totalPages);
 
-        setHasMore(page < res.data.meta.totalPages);
-
-        // Update filter options only on initial load or new search
-        if (isNewSearch || initialLoad) {
+        // Update filter options only on initial load
+        if (initialLoad) {
           setAllCounties(
             res.data.allCounties.filter(Boolean).map((county: any) => ({
               label: county,
@@ -294,7 +284,8 @@ const PropertyListingPage = () => {
       }
     },
     [
-      page,
+      currentPage,
+      itemsPerPage,
       debouncedSearch,
       selectedCounty,
       selectedState,
@@ -308,43 +299,49 @@ const PropertyListingPage = () => {
     ]
   );
 
-  // Optimized intersection observer setup
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasMore && !loading) {
-          fetchMoreProperties(false);
-        }
-      },
-      { threshold: 0.5 }
-    );
 
-    const sentinel = document.querySelector("#scroll-sentinel");
-    if (sentinel) observer.observe(sentinel);
-
-    return () => observer.disconnect();
-  }, [fetchMoreProperties, hasMore, loading]);
+  console.log("properties", properties);
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    // Scroll to top when changing pages
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   // Optimized debounce effect
   useEffect(() => {
     const handler = setTimeout(() => {
       if (searchInput !== debouncedSearch) {
         setDebouncedSearch(searchInput);
-        setProperties([]);
-        setPage(1);
-        setHasMore(true);
+        setCurrentPage(1); // Reset to first page on new search
       }
-    }, 300); // Reduced debounce time for faster response
+    }, 300);
 
     return () => clearTimeout(handler);
   }, [searchInput]);
 
-  // Effect for filter changes
+  // Effect for filter or page changes
   useEffect(() => {
-    setProperties([]);
-    setPage(1);
-    setHasMore(true);
-    fetchMoreProperties(true);
+    fetchProperties();
+  }, [
+    currentPage,
+    debouncedSearch,
+    selectedCounty,
+    selectedState,
+    selectedOwnerType,
+    selectedPropertyType,
+    selectedOwnerOccupancy,
+    selectedDataRange,
+    selectedYearBuilt,
+    selectedEstimatedValue,
+    fetchProperties
+  ]);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    if (!initialLoad) {
+      setCurrentPage(1);
+    }
   }, [
     debouncedSearch,
     selectedCounty,
@@ -355,16 +352,12 @@ const PropertyListingPage = () => {
     selectedDataRange,
     selectedYearBuilt,
     selectedEstimatedValue,
+    initialLoad
   ]);
-
-  // Initial load
-  useEffect(() => {
-    fetchMoreProperties(true);
-  }, []);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchInput(e.target.value);
-    setLoading(true); // Show loading state immediately on search
+    setLoading(true);
   };
 
   // Filter change handlers with localStorage persistence
@@ -404,8 +397,8 @@ const PropertyListingPage = () => {
     localStorage.setItem(
       "selectedYearBuilt",
       JSON.stringify({
-        from: selectedYearBuilt.from ?? "",
-        to: selectedYearBuilt.to ?? "",
+        from: from ?? "",
+        to: to ?? "",
       })
     );
   };
@@ -415,8 +408,8 @@ const PropertyListingPage = () => {
     localStorage.setItem(
       "selectedEstimatedValue",
       JSON.stringify({
-        from: selectedEstimatedValue.from ?? "",
-        to: selectedEstimatedValue.to ?? "",
+        from: from ?? "",
+        to: to ?? "",
       })
     );
   };
@@ -431,6 +424,7 @@ const PropertyListingPage = () => {
     setSelectedYearBuilt({ from: undefined, to: undefined });
     setSelectedEstimatedValue({ from: undefined, to: undefined });
     setSearchInput("");
+    setCurrentPage(1);
     localStorage.removeItem("selectedCounties");
     localStorage.removeItem("selectedStates");
     localStorage.removeItem("selectedOwnerTypes");
@@ -491,8 +485,6 @@ const PropertyListingPage = () => {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-
-        
         </div>
 
         <div className="my-10 flex flex-wrap lg:flex-nowrap justify-between gap-6">
@@ -552,28 +544,6 @@ const PropertyListingPage = () => {
                 storageKey="selectedPropertyTypes"
               />
             </Suspense>
-            {/* <Suspense fallback={<Skeleton className="h-12" />}>
-              <MultiSelector
-                key={selectedOwnerType.join(",")}
-                options={allOwnerTypes}
-                placeholder="Select Owner Type"
-                onChange={handleOwnerTypeChange}
-                selectedValues={selectedOwnerType}
-                buttonWidth="w-full"
-                storageKey="selectedOwnerTypes"
-              />
-            </Suspense> */}
-            {/* <Suspense fallback={<Skeleton className="h-12" />}>
-              <MultiSelector
-                key={selectedOwnerOccupancy.join(",")}
-                options={allOwnerOccupancy}
-                placeholder="Select Owner Occupancy"
-                onChange={handleOwnerOccupancyChange}
-                selectedValues={selectedOwnerOccupancy}
-                buttonWidth="w-full"
-                storageKey="selectedOwnerOccupancy"
-              />
-            </Suspense> */}
             <Suspense fallback={<Skeleton className="h-12" />}>
               <DateRangePicker
                 date={selectedDataRange}
@@ -704,7 +674,7 @@ const PropertyListingPage = () => {
           </div>
 
           <div className="w-full lg:w-3/4 transition-all duration-300 ease-in-out">
-            {loading && properties.length === 0 ? (
+            {loading ? (
               <TableSkeleton rows={15} columns={4} className="my-4" />
             ) : properties.length > 0 ? (
               <>
@@ -717,19 +687,17 @@ const PropertyListingPage = () => {
                     <PropertyListingTable
                       data={properties}
                       selectedColumns={selectedColumns}
+                      paginationData={{
+                        currentPage,
+                        totalPages,
+                        onPageChange: handlePageChange
+                      }}
                     />
                   </div>
                 </Suspense>
-                <div
-                  id="scroll-sentinel"
-                  className="h-20 transition-all duration-300 ease-in-out"
-                >
-                  {loading && (
-                    <Suspense fallback={<div className="h-20" />}>
-                      <LoadingSpinner />
-                    </Suspense>
-                  )}
-                </div>
+                
+                {/* Pagination component */}
+                {/* Pagination is now handled by the PropertyListingTable component */}
               </>
             ) : (
               <div className="text-center py-8 animate-fadeIn">

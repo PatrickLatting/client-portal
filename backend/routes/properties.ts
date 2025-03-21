@@ -10,7 +10,7 @@ const propertiesRouter = express.Router();
 propertiesRouter.get("/get-properties", async (req: Request, res: Response) => {
   try {
     const page = Math.max(parseInt(req.query.page as string, 10) || 1, 1);
-    const limit = 15;
+    const limit = 100;
     const skip = (page - 1) * limit;
 
     const search = (req.query.search as string) || "";
