@@ -1,5 +1,5 @@
 // PropertyListingPage.tsx
-import { lazy, Suspense, useCallback, useEffect, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
 import {
@@ -18,6 +18,7 @@ import { Skeleton } from "../components/ui/skeleton";
 import LoadingSpinner from "../components/LoadingSpinner ";
 import { DateRange } from "react-day-picker";
 import { format } from "date-fns";
+import React from "react";
 
 const MultiSelector = lazy(
   () => import("../components/propertyListing/MultiSelect")
@@ -27,7 +28,7 @@ const PropertyListingTable = lazy(
 );
 const DateRangePicker = lazy(
   () => import("../components/propertyListing/DateRangePicker")
-);
+)
 // Pagination is now integrated within the PropertyListingTable component
 
 const PropertyListingPage = () => {
@@ -48,7 +49,6 @@ const PropertyListingPage = () => {
     "HOA_PRESENT",
     "LOT_ACRES",
   ];
-
   const [searchInput, setSearchInput] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [properties, setProperties] = useState<PropertyDetails[]>([]);
@@ -75,7 +75,10 @@ const PropertyListingPage = () => {
   const [allOwnerOccupancy, setAllOwnerOccupancy] = useState<
     { label: string; value: string }[]
   >([]);
-
+  const [sortParams, setSortParams] = useState<{ 
+    colId: string; 
+    sort: 'asc' | 'desc' | null 
+  } | null>(null);
   // Initialize filter states from localStorage with proper typing
   const [selectedCounty, setSelectedCounty] = useState<string[]>(() => {
     try {
@@ -192,8 +195,8 @@ const PropertyListingPage = () => {
   const { user } = useUser();
 
   // Fetch properties based on current page and filters
-  const fetchProperties = useCallback(
-    async () => {
+  const fetchProperties = useMemo(() => {
+    return async () => {
       setLoading(true);
       try {
         const fromDate = selectedDataRange?.from
@@ -202,11 +205,11 @@ const PropertyListingPage = () => {
         const toDate = selectedDataRange?.to
           ? format(selectedDataRange.to, "M/d/yyyy")
           : undefined;
-
+  
         const queryParams = new URLSearchParams({
           search: debouncedSearch,
           page: currentPage.toString(),
-          limit: itemsPerPage.toString(), // Add items per page
+          limit: itemsPerPage.toString(),
           ...(selectedCounty.length && { county: selectedCounty.join(",") }),
           ...(selectedState.length && { state: selectedState.join(",") }),
           ...(selectedOwnerType.length && {
@@ -230,15 +233,20 @@ const PropertyListingPage = () => {
           ...(selectedEstimatedValue.to && {
             estimatedTo: selectedEstimatedValue.to,
           }),
+          // Add sort parameters if available
+          ...(sortParams && sortParams.colId && sortParams.sort && { 
+            sortColumn: sortParams.colId,
+            sortDirection: sortParams.sort
+          }),
         });
         
         const res = await axios.get(
           `${process.env.REACT_APP_API_BASE_URL}/get-properties?${queryParams}`
         );
-
+  
         setProperties(res.data.data);
         setTotalPages(res.data.meta.totalPages);
-
+  
         // Update filter options only on initial load
         if (initialLoad) {
           setAllCounties(
@@ -267,14 +275,14 @@ const PropertyListingPage = () => {
               value: state,
             }))
           );
-
+  
           setAllOwnerOccupancy(
             res.data.allOwnerOccupancy.map((occupancy: string) => ({
               label: occupancy,
               value: occupancy,
             }))
           );
-
+  
           setInitialLoad(false);
         }
       } catch (err) {
@@ -282,25 +290,27 @@ const PropertyListingPage = () => {
       } finally {
         setLoading(false);
       }
-    },
-    [
-      currentPage,
-      itemsPerPage,
-      debouncedSearch,
-      selectedCounty,
-      selectedState,
-      selectedOwnerType,
-      selectedPropertyType,
-      selectedOwnerOccupancy,
-      selectedDataRange,
-      selectedYearBuilt,
-      selectedEstimatedValue,
-      initialLoad,
-    ]
-  );
+    };
+  }, [
+    currentPage,
+    itemsPerPage,
+    debouncedSearch,
+    selectedCounty,
+    selectedState,
+    selectedOwnerType,
+    selectedPropertyType,
+    selectedOwnerOccupancy,
+    selectedDataRange,
+    selectedYearBuilt,
+    selectedEstimatedValue,
+    initialLoad,
+    sortParams, // Include sortParams in dependencies
+  ]);
 
-
+  // 2. Add a reference to track initial sort restoration
+const initialSortRestored = React.useRef(false);
   console.log("properties", properties);
+  // Handle page change
   // Handle page change
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -320,6 +330,23 @@ const PropertyListingPage = () => {
     return () => clearTimeout(handler);
   }, [searchInput]);
 
+  const handleSortChanged = (sortModel: { colId: string, sort: 'asc' | 'desc' | null }) => {
+    // Only update if the sort has actually changed
+    if (!sortParams || 
+        sortParams.colId !== sortModel.colId || 
+        sortParams.sort !== sortModel.sort) {
+      
+      setSortParams(sortModel);
+      
+      // Only reset page on user-initiated sort changes, not on initial load
+      if (initialSortRestored.current) {
+        setCurrentPage(1);
+      } else {
+        initialSortRestored.current = true;
+      }
+    }
+  };
+  
   // Effect for filter or page changes
   useEffect(() => {
     fetchProperties();
@@ -334,9 +361,8 @@ const PropertyListingPage = () => {
     selectedDataRange,
     selectedYearBuilt,
     selectedEstimatedValue,
-    fetchProperties
+    sortParams, // Keep sortParams here
   ]);
-
   // Reset to first page when filters change
   useEffect(() => {
     if (!initialLoad) {
@@ -684,15 +710,16 @@ const PropertyListingPage = () => {
                   }
                 >
                   <div className="transition-opacity duration-300 ease-in-out">
-                    <PropertyListingTable
-                      data={properties}
-                      selectedColumns={selectedColumns}
-                      paginationData={{
-                        currentPage,
-                        totalPages,
-                        onPageChange: handlePageChange
-                      }}
-                    />
+                  <PropertyListingTable
+                    data={properties}
+                    selectedColumns={selectedColumns}
+                    paginationData={{
+                      currentPage,
+                      totalPages,
+                      onPageChange: handlePageChange
+                    }}
+                    onSortChanged={handleSortChanged} // Add the sort handler
+                  />
                   </div>
                 </Suspense>
                 

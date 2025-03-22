@@ -20,12 +20,13 @@ propertiesRouter.get("/get-properties", async (req: Request, res: Response) => {
     const state = (req.query.state as string) || "";
     const ownerOccupancy = (req.query.ownerOccupancy as string) || "";
 
+    // Get sort parameters
+    const sortColumn = (req.query.sortColumn as string) || "";
+    const sortDirection = (req.query.sortDirection as string) || "";
+
     // Get date parameters directly as strings
     const fromDate = (req.query.fromDate as string) || undefined;
     const toDate = (req.query.toDate as string) || undefined;
-
-    // Log incoming date parameters
-    // console.log("Incoming date parameters:", { fromDate, toDate });
 
     const yearBuiltFrom = parseInt(req.query.yearBuiltFrom as string, 10);
     const yearBuiltTo = parseInt(req.query.yearBuiltTo as string, 10);
@@ -117,10 +118,40 @@ propertiesRouter.get("/get-properties", async (req: Request, res: Response) => {
       }
     }
 
-    // Log the final filter for debugging
-    // console.log("Final filter:", JSON.stringify(filter, null, 2));
+    // Create sort object for MongoDB query
+    let sort: any = {};
 
-    // Execute queries
+    // Map AG Grid column names to database field names if needed
+    // This maps the frontend column names to the database field names
+    const columnMapping: Record<string, string> = {
+      Address: "Address",
+      State: "State",
+      County: "County",
+      LAND_USE: "LAND_USE",
+      "Principal Amount Owed": "Principal Amount Owed",
+      ESTIMATED_VALUE: "ESTIMATED_VALUE",
+      "Foreclosure Sale Date": "SALE_DATE_1",
+      "Parcel Number": "Parcel Number",
+      YEAR_BUILT: "YEAR_BUILT",
+      BEDROOMS: "BEDROOMS",
+      BATHROOMS: "BATHROOMS",
+      STORIES: "STORIES",
+      SQUARE_FEET: "SQUARE_FEET",
+      HOA_PRESENT: "HOA_PRESENT",
+      LOT_ACRES: "LOT_ACRES",
+      // Add mappings for other columns as needed
+    };
+
+    if (sortColumn && sortDirection) {
+      // Get the database field name from the mapping
+      const dbFieldName = columnMapping[sortColumn] || sortColumn;
+      sort[dbFieldName] = sortDirection === "asc" ? 1 : -1;
+    } else {
+      // Default sort, e.g., by most recent
+      sort = { SALE_DATE_1: -1 };
+    }
+
+    // Execute queries with sort applied
     const [
       properties,
       total,
@@ -130,7 +161,7 @@ propertiesRouter.get("/get-properties", async (req: Request, res: Response) => {
       allStates,
       allOwnerOccupancy,
     ] = await Promise.all([
-      Properties.find(filter).skip(skip).limit(limit),
+      Properties.find(filter).sort(sort).skip(skip).limit(limit),
       Properties.countDocuments(filter),
       Properties.distinct("County"),
       Properties.distinct("LAND_USE"),
@@ -206,11 +237,11 @@ propertiesRouter.post(
       }
 
       // Convert single propertyId to array if provided
-      const propertiesToSave = propertyId 
-        ? [propertyId] 
-        : Array.isArray(propertyIds) 
-          ? propertyIds 
-          : [];
+      const propertiesToSave = propertyId
+        ? [propertyId]
+        : Array.isArray(propertyIds)
+        ? propertyIds
+        : [];
 
       // Validate if propertyIds is an array when provided
       if (propertyIds && !Array.isArray(propertyIds)) {
@@ -246,7 +277,6 @@ propertiesRouter.post(
   }
 );
 
-
 propertiesRouter.post(
   "/property/save-multiple",
   userAuth,
@@ -262,7 +292,11 @@ propertiesRouter.post(
       const { propertyIds } = req.body;
 
       // Validate propertyIds array
-      if (!propertyIds || !Array.isArray(propertyIds) || propertyIds.length === 0) {
+      if (
+        !propertyIds ||
+        !Array.isArray(propertyIds) ||
+        propertyIds.length === 0
+      ) {
         res.status(400).json({ error: "Valid property IDs array is required" });
         return;
       }

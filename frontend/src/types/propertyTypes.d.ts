@@ -1,4 +1,5 @@
 export type PropertyDetails = {
+  totalCount: number;
   _id?: unknown;
   State: string;
   County: string;

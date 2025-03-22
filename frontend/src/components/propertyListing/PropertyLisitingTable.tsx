@@ -31,8 +31,8 @@ interface DynamicGridProps {
   selectedColumns: string[];
   onSelectionChanged?: (selectedRows: PropertyDetails[]) => void;
   paginationData?: PaginationData;
+  onSortChanged?: (sortModel: { colId: string, sort: 'asc' | 'desc' | null }) => void;
 }
-
 const GRID_STATE_KEY = 'propertyGridState';
 
 interface SavedGridState {
@@ -45,7 +45,8 @@ const PropertyListingTable: React.FC<DynamicGridProps> = ({
   data,
   selectedColumns,
   onSelectionChanged,
-  paginationData
+  paginationData,
+  onSortChanged
 }) => {
   const navigate = useNavigate();
   const gridRef = React.useRef<AgGridReact>(null);
@@ -224,8 +225,29 @@ const PropertyListingTable: React.FC<DynamicGridProps> = ({
 
     localStorage.setItem(GRID_STATE_KEY, JSON.stringify(gridState));
   }, []);
+  const handleSortChanged = useCallback(() => {
+    const gridApi = gridRef.current?.api;
+    if (!gridApi) return;
 
-  const restoreGridState = useCallback(() => {
+    // Get current sort state
+    const columnStates = gridApi.getColumnState();
+    const sortColumns = columnStates
+      .filter(state => state.sort)
+      .map(state => ({
+        colId: state.colId,
+        sort: state.sort as 'asc' | 'desc' | null
+      }));
+
+    // Save to localStorage
+    saveGridState();
+
+    // Notify parent component about sort changes
+    if (onSortChanged && sortColumns.length > 0) {
+      onSortChanged(sortColumns[0]); // Send first sort column (AG Grid typically sorts by one column)
+    }
+  }, [onSortChanged, saveGridState]);
+
+   const restoreGridState = useCallback(() => {
     const gridApi = gridRef.current?.api;
     if (!gridApi) return;
 
@@ -257,12 +279,17 @@ const PropertyListingTable: React.FC<DynamicGridProps> = ({
           state: sortModel,
           defaultState: { sort: null }
         });
+        
+        // Notify parent about restored sort
+        if (onSortChanged && sortModel.length > 0) {
+          onSortChanged(sortModel[0]);
+        }
       }
     } catch (error) {
       console.error('Error restoring grid state:', error);
       localStorage.removeItem(GRID_STATE_KEY);
     }
-  }, []);
+  }, [onSortChanged]);
 
   const onGridReady = useCallback((params: GridReadyEvent) => {
     restoreGridState();
@@ -273,6 +300,7 @@ const PropertyListingTable: React.FC<DynamicGridProps> = ({
       saveGridState();
     };
   }, [saveGridState]);
+
 
   const handleCellClicked = (event: CellClickedEvent) => {
     if (!event.column.getColDef().checkboxSelection && event.data) {
@@ -392,7 +420,7 @@ const PropertyListingTable: React.FC<DynamicGridProps> = ({
       )}
    
       <div className="w-full h-screen bg-white overflow-x-hidden rounded-xl border">
-        <AgGridReact
+      <AgGridReact
           ref={gridRef}
           rowData={data}
           columnDefs={generateColDefs()}
@@ -401,7 +429,7 @@ const PropertyListingTable: React.FC<DynamicGridProps> = ({
           onGridReady={onGridReady}
           onCellClicked={handleCellClicked}
           onFilterChanged={saveGridState}
-          onSortChanged={saveGridState}
+          onSortChanged={handleSortChanged} // Use our new sort handler
           pagination={false} // We're using custom pagination
           enableRangeSelection={true}
           animateRows={true}
