@@ -338,12 +338,11 @@ const initialSortRestored = React.useRef(false);
       
       setSortParams(sortModel);
       
-      // Only reset page on user-initiated sort changes, not on initial load
-      if (initialSortRestored.current) {
-        setCurrentPage(1);
-      } else {
+      // Just mark that initial sort has been restored
+      if (!initialSortRestored.current) {
         initialSortRestored.current = true;
       }
+      // Remove the setCurrentPage(1) entirely
     }
   };
   
