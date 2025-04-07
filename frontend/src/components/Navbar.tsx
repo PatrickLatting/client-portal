@@ -123,13 +123,13 @@ export default function Component() {
                   >
                     My Properties
                   </Link>
-                  <Link
+                  {/* <Link
                     onClick={() => setIsSheetOpen(false)}
                     to="/order-history"
                     className="flex w-full items-center py-2 text-lg font-semibold"
                   >
                     Order History
-                  </Link>
+                  </Link> */}
                   {/* <Link
                     onClick={() => setIsSheetOpen(false)}
                     to="/state-laws"
@@ -189,7 +189,7 @@ export default function Component() {
             >
               My Properties
             </Link>
-            <Link
+            {/*<Link
               to="/order-history"
               className="group inline-flex h-9 w-max items-center justify-center"
             >

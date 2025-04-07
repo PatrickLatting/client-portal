@@ -164,24 +164,38 @@ const PropertyDetailsPage = () => {
 
   // Break out the details into separate headings within one container
   const propertyDetailsSection = [
-    { label: "Estimated Value", value: property?.ESTIMATED_VALUE },
-    { label: "Square Feet", value: property?.SQUARE_FEET },
-    { label: "Bedrooms", value: property?.BEDROOMS },
-    { label: "Bathrooms", value: property?.BATHROOMS },
-    { label: "Stories", value: property?.STORIES },
-    { label: "Lot Acres", value: property?.LOT_ACRES },
-    { label: "Year Built", value: property?.YEAR_BUILT },
-    { label: "Effective Year Built", value: property?.YEAR_BUILT },
-    { label: "Tax Amount", value: property?.TAX_YEAR_1},
+    { label: "Zillow low estimate", value: property?.["Zillow low estimate"] != null ? `$${Math.round(property["Zillow low estimate"]).toLocaleString()}` : "-" },
+    { label: "Zillow high estimate", value: property?.["Zillow high estimate"] != null ? `$${Math.round(property["Zillow high estimate"]).toLocaleString()}` : "-" },
+    { label: "Rent Zestimate", value: property?.["Rent Zestimate"] != null ? `$${Math.round(property["Rent Zestimate"]).toLocaleString()}` : "-" },
+    { label: "Independent Valuation", value: property?.["Sale Comp Valuation by sq ft (median)"] != null ? `$${Math.round(property["Sale Comp Valuation by sq ft (median)"]).toLocaleString()}` : "-" },
+    { label: "Year Built", value: property?.["Year Built"] },
+    { label: "Square Feet", value: property?.["Living Area (sq ft)"] },
+    { label: "Bedrooms", value: property?.Bedrooms },
+    { label: "Bathrooms", value: property?.Bathrooms },
+    {label: "Lot Acres",
+      value: property?.["Lot Size"]
+        ? (Number(property["Lot Size"].replace(/[^\d.]/g, "")) / 43560).toFixed(2): null, },
+        {label: "Tax Amount", value: property?.["Annual Tax Amount"]
+            ? new Intl.NumberFormat("en-US", {
+                style: "currency", currency: "USD", maximumFractionDigits: 0,
+              }).format(Number(property["Annual Tax Amount"])) : "-"}        
   ];
 
   const foreclosureDetailsSection = [
     {
       label: "Original Loan Balance",
-      value: property?.["Principal Amount Owed"] ?? "Not Available",
-    },
+      value: property?.["Principal Amount Owed"] !== undefined
+        ? `$${Number(property["Principal Amount Owed"]).toLocaleString()}`
+        : "Not Available", 
+      },
     { label: "Trustee", value: property?.["Law Firm Name"] ?? "Not Available" },
     { label: "Lender", value: property?.["Lender Name"] ?? "Not Available" },
+    {
+      label: "Foreclosure Sale Date",
+      value: property?.["Foreclosure Sale Date"]
+        ? new Date(property["Foreclosure Sale Date"]).toLocaleDateString("en-US")
+        : "Not Available"
+    },
     {
       label: "Date of Debt",
       value: property?.["Date of Debt"] ?? "Not Available",
@@ -194,27 +208,46 @@ const PropertyDetailsPage = () => {
       label: "Lender Phone Number",
       value: property?.["Lender Phone Number"] ?? "Not Available",
     },
+    
     {
-      label: "Foreclosure Sale Date",
-      value: property?.["Foreclosure Sale Date"] ?? "Not Available",
-    },
+      label: "Sale Location",
+      value: property?.["Foreclosure Sale Location"] ?? "Not Available",
+    }    
   ];
 
-  const ownershipDetailsSection = [
-    { label: "Borrower Name(s)", value: property?.["Borrower Name(s)"] },
-    { label: "Owner Occupied?", value: property?.OWNER_OCCUPANCY ? "Yes" : "No" },
-    { label: "Last Purchased", value: property?.SALE_DATE_1 },
-    {
-      label: "Years of Ownership",
-      value: property?.SALE_DATE_1
-        ? Math.floor(
-            (new Date().getTime() - new Date(property.SALE_DATE_1).getTime()) /
-              (1000 * 60 * 60 * 24 * 365.25)
-          )
-        : "Not Available",
-    },
-  ];
-console.log(property);
+  const ownershipDetailsSection = !property
+  ? []
+  : [
+      { label: "Borrower Name(s)", value: property["Borrower Name(s)"] },
+      {
+        label: "Last Purchased",
+        value: (() => {
+          for (let i = 1; i <= 20; i++) {
+            const event = (property as any)[`PRICE_HISTORY_EVENT_${i}`];
+            if (event === "Sold") {
+              return (property as any)[`PRICE_HISTORY_DATE_${i}`];
+            }
+          }
+          return "Not Available";
+        })(),
+      },
+      {
+        label: "Years of Ownership",
+        value: (() => {
+          for (let i = 1; i <= 20; i++) {
+            const event = (property as any)[`PRICE_HISTORY_EVENT_${i}`];
+            const date = (property as any)[`PRICE_HISTORY_DATE_${i}`];
+            if (event === "Sold" && date) {
+              return Math.floor(
+                (new Date().getTime() - new Date(date).getTime()) /
+                  (1000 * 60 * 60 * 24 * 365.25)
+              );
+            }
+          }
+          return "Not Available";
+        })(),
+      },
+    ];
 
 if (loading) {
   return (
@@ -229,14 +262,12 @@ const isPropertyDataIncomplete = (property: PropertyDetails | null) => {
   if (!property) return true;
 
   const importantFields = [
-    property.ESTIMATED_VALUE,
-    property.SQUARE_FEET,
-    property.BEDROOMS,
-    property.BATHROOMS,
-    property.STORIES,
-    property.LOT_ACRES,
-    property.YEAR_BUILT,
-    property.TAX_YEAR_1,
+    property.Zestimate,
+    property["Living Area (sq ft)"],
+    property.Bedrooms,
+    property.Bathrooms,
+    property["Year Built"],
+    property["Annual Tax Amount"],
   ];
 
   return importantFields.every(
@@ -255,26 +286,135 @@ const isPropertyDataIncomplete = (property: PropertyDetails | null) => {
         <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold text-center">
           {property?.Address}
         </h1>
-
-        <div className="flex flex-wrap gap-3 justify-center">
-          <Badge variant="outline" className="text-sm md:text-base px-4 py-1">
-            {property?.LAND_USE}
-          </Badge>
-          <Badge variant="outline" className="text-sm md:text-base px-4 py-1">
-            {property?.["Foreclosure Sale Date"] || "No Sale Date Available"}
-          </Badge>
-          <Badge variant="outline" className="text-sm md:text-base px-4 py-1">
-            {property?.["Parcel Number"] || "No Sale Date Available"}
-          </Badge>
-        </div>
       </div>
+      <div className="flex flex-col md:flex-row gap-4 mb-8">
 
-      {/* Actions Section */}
-      <PropertyActions
-        property={property}
-        isThisPropertySaved={isThisPropertySaved}
-        setIsThisPropertySaved={setIsThisPropertySaved}
-      />
+        
+  {/* Left column: Save Button (Actions) + Property Details */}
+  <div className="md:w-1/3 space-y-4">
+    <PropertyActions
+      property={property}
+      isThisPropertySaved={isThisPropertySaved}
+      setIsThisPropertySaved={setIsThisPropertySaved}
+    />
+
+    <section>
+      <h2 className="text-xl md:text-2xl font-semibold mb-4">Property Details</h2>
+      {propertyDetailsSection.every((item) => !item.value) ? (
+        <div className="text-center text-gray-700 text-lg py-6">
+          We're sorry, but information is not available for this property.
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {propertyDetailsSection.map((item, index) => (
+            <div key={index} className="space-y-2">
+              <div className="font-medium text-blue-900">{item.label}</div>
+              <div className="text-gray-700">{item.value || "-"}</div>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  </div>
+
+{/* Right column: Image Carousel */}
+<div className="md:w-2/3">
+  <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+    <PropertyImageCarousel
+      images={[
+        {
+          url: property?.zillow_image_1,
+          alt: `Zillow image 1 of ${property?.Address}`,
+        },
+        {
+          url: property?.zillow_image_2,
+          alt: `Zillow image 2 of ${property?.Address}`,
+        },
+        {
+          url: property?.zillow_image_3,
+          alt: `Zillow image 3 of ${property?.Address}`,
+        },
+        {
+          url: property?.zillow_image_4,
+          alt: `Zillow image 4 of ${property?.Address}`,
+        },
+        {
+          url: property?.zillow_image_5,
+          alt: `Zillow image 5 of ${property?.Address}`,
+        },
+        {
+          url: property?.zillow_image_6,
+          alt: `Zillow image 6 of ${property?.Address}`,
+        },
+        {
+          url: property?.zillow_image_7,
+          alt: `Zillow image 7 of ${property?.Address}`,
+        },
+        {
+          url: property?.zillow_image_8,
+          alt: `Zillow image 8 of ${property?.Address}`,
+        },
+        {
+          url: property?.zillow_image_9,
+          alt: `Zillow image 9 of ${property?.Address}`,
+        },
+        {
+          url: property?.zillow_image_10,
+          alt: `Zillow image 10 of ${property?.Address}`,
+        },
+        {
+          url: property?.zillow_image_11,
+          alt: `Zillow image 11 of ${property?.Address}`,
+        },
+        {
+          url: property?.zillow_image_12,
+          alt: `Zillow image 12 of ${property?.Address}`,
+        },
+        {
+          url: property?.zillow_image_13,
+          alt: `Zillow image 13 of ${property?.Address}`,
+        },
+        {
+          url: property?.zillow_image_14,
+          alt: `Zillow image 14 of ${property?.Address}`,
+        },
+        {
+          url: property?.zillow_image_15,
+          alt: `Zillow image 15 of ${property?.Address}`,
+        },
+        {
+          url: property?.zillow_image_16,
+          alt: `Zillow image 16 of ${property?.Address}`,
+        },
+        {
+          url: property?.zillow_image_17,
+          alt: `Zillow image 17 of ${property?.Address}`,
+        },
+        {
+          url: property?.zillow_image_18,
+          alt: `Zillow image 18 of ${property?.Address}`,
+        },
+        {
+          url: property?.zillow_image_19,
+          alt: `Zillow image 19 of ${property?.Address}`,
+        },
+        {
+          url: property?.zillow_image_20,
+          alt: `Zillow image 20 of ${property?.Address}`,
+        },
+        {
+          url: property?.["Google Maps Image URL"],
+          alt: `Street view of ${property?.Address}`,
+        },
+        {
+          url: property?.["Google Earth Image URL"],
+          alt: `Satellite view of ${property?.Address}`,
+        },
+      ].filter((image): image is { url: string; alt: string } => !!image.url)}
+    />
+  </div>
+</div>
+</div>
 
       {/* Combined Details Section in a single container */}
       <div className="mb-6 bg-white rounded-lg shadow-lg p-6 space-y-8">
@@ -295,202 +435,290 @@ const isPropertyDataIncomplete = (property: PropertyDetails | null) => {
 
         <hr className="border-t border-gray-200 my-4" />
 
-        {/* Property Details Header & Grid */}
         <section>
-      <h2 className="text-xl md:text-2xl font-semibold mb-4">Property Details</h2>
-      {propertyDetailsSection.every((item) => !item.value) ? (
-        <div className="text-center text-gray-700 text-lg py-6">
-          We're sorry, but information is not available for this property.
+  <h2 className="text-xl md:text-2xl font-semibold mb-4">Foreclosure Details</h2>
+  <div className="grid grid-cols-4">
+    {foreclosureDetailsSection.map((item, index) => {
+      const isLastColumn = (index + 1) % 4 === 0;
+      return (
+        <div
+          key={index}
+          className={`p-4 ${!isLastColumn ? "border-r border-gray-300" : ""}`}
+        >
+          <div className="font-medium text-blue-900">{item.label}</div>
+          <div className="text-gray-700">{item.value || "-"}</div>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
-          {propertyDetailsSection.map((item, index) => (
-            <div key={index} className="space-y-2">
-              <div className="font-medium text-blue-900">{item.label}</div>
-              <div className="text-gray-700">{item.value || "-"}</div>
-            </div>
-          ))}
-        </div>
-      )}
-    </section>
+      );
+    })}
+  </div>
+</section>
 
-
-
-
-        <hr className="border-t border-gray-200 my-4" />
-
-        {/* Foreclosure Details Header & Grid */}
-        <section>
-          <h2 className="text-xl md:text-2xl font-semibold mb-4">
-            Foreclosure Details
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-3">
-            {foreclosureDetailsSection.map((item, index) => (
-              <div key={index} className="space-y-2">
-                <div className="font-medium text-blue-900">{item.label}</div>
-                <div className="text-gray-700">{item.value || "-"}</div>
-              </div>
-            ))}
-          </div>
-        </section>
-      </div>
+</div>
 
       {/* Sale and Assessment History Section */}
       {property && (
         <div className="mb-8 bg-white rounded-lg shadow-lg p-6 space-y-8">
-          {/* Recent Sale History Table */}
-          <section>
-  <h2 className="text-xl md:text-2xl font-semibold mb-4">Recent Sale History</h2>
-  {![property?.SALE_DATE_1, property?.AMOUNT_1].some(Boolean) ? (
-    <div className="text-center text-gray-700 text-lg py-6">
-      We're sorry, but recent sale history information is not available.
-    </div>
-  ) : (
-    <table className="w-full text-left border-collapse">
-      <thead className="border-b border-gray-300">
-        <tr>
-          <th className="px-4 py-2">Sale Date</th>
-          <th className="px-4 py-2">Amount</th>
-        </tr>
-      </thead>
-      <tbody>
-        {[property?.SALE_DATE_1, property?.SALE_DATE_2, property?.SALE_DATE_3, property?.SALE_DATE_4, property?.SALE_DATE_5].map(
-          (saleDate, index) => (
-            <tr key={index} className="border-b border-gray-200">
-              <td className="px-4 py-2">{saleDate || "N/A"}</td>
-              <td className="px-4 py-2">
-                {property?.[`AMOUNT_${index + 1}` as keyof PropertyDetails]
-                  ? `$${Number(property[`AMOUNT_${index + 1}` as keyof PropertyDetails]).toLocaleString()}`
-                  : "N/A"}
-              </td>
-            </tr>
-          )
-        )}
-      </tbody>
-    </table>
-  )}
-</section>
-
+        {/* Recent Sale History Table */}
 <section>
-  <h2 className="text-xl md:text-2xl font-semibold mb-4">Recent Assessment History</h2>
-  {![property?.TAX_YEAR_1, property?.ASSESSED_VALUE_1].some(Boolean) ? (
-    <div className="text-center text-gray-700 text-lg py-6">
-      We're sorry, but assessment history information is not available.
-    </div>
-  ) : (
+  <h2 className="text-xl md:text-2xl font-semibold mb-4">Sale History</h2>
+  {!property ? (
+  <div className="text-center text-gray-700 text-lg py-6">
+    We're sorry, but recent sale history information is not available.
+  </div>
+) : !property?.PRICE_HISTORY_DATE_1 ? (
+  <div className="text-center text-gray-700 text-lg py-6">
+    We're sorry, but recent sale history information is not available.
+  </div>
+) : (
+  <section>
     <table className="w-full text-left border-collapse">
       <thead className="border-b border-gray-300">
         <tr>
-          <th className="px-4 py-2">Tax Year</th>
-          <th className="px-4 py-2">Assessed Value</th>
+          <th className="px-4 py-2">Date</th>
+          <th className="px-4 py-2">Event</th>
+          <th className="px-4 py-2">Price</th>
+          <th className="px-4 py-2">Price/SqFt</th>
         </tr>
       </thead>
       <tbody>
-        {[property?.TAX_YEAR_1, property?.TAX_YEAR_2, property?.TAX_YEAR_3, property?.TAX_YEAR_4, property?.TAX_YEAR_5].map(
-          (year, index) => (
-            <tr key={index} className="border-b border-gray-200">
-              <td className="px-4 py-2">{year || "N/A"}</td>
+        {[1, 2, 3, 4, 5].map((i) => {
+          const date = property[`PRICE_HISTORY_DATE_${i}` as keyof PropertyDetails];
+          const event = property[`PRICE_HISTORY_EVENT_${i}` as keyof PropertyDetails];
+          const price = property[`PRICE_HISTORY_PRICE_${i}` as keyof PropertyDetails];
+          const pricePerSqFt = property[`PRICE_HISTORY_PRICEPERSQUAREFOOT_${i}` as keyof PropertyDetails];
+
+          if (!date && !event && !price && !pricePerSqFt) return null;
+
+          return (
+            <tr key={i} className="border-b border-gray-200">
+              <td className="px-4 py-2">{String(date) || "N/A"}</td>
+              <td className="px-4 py-2">{String(event) || "N/A"}</td>
               <td className="px-4 py-2">
-                {property?.[`ASSESSED_VALUE_${index + 1}` as keyof PropertyDetails]
-                  ? `$${Number(property[`ASSESSED_VALUE_${index + 1}` as keyof PropertyDetails]).toLocaleString()}`
-                  : "N/A"}
+                {price ? `$${Number(price).toLocaleString()}` : "N/A"}
+              </td>
+              <td className="px-4 py-2">
+                {pricePerSqFt ? `$${Number(pricePerSqFt).toLocaleString()}` : "N/A"}
               </td>
             </tr>
-          )
-        )}
+          );
+        })}
       </tbody>
     </table>
-  )}
+  </section>
+)}
 </section>
 
         </div>
       )}
 
-      {/* Image Carousel & Map Section Combined */}
-      <div className="mb-8 bg-white rounded-lg shadow-lg overflow-hidden flex flex-col md:flex-row gap-4">
-        {/* Image Carousel (Left) */}
-        <div className="w-full md:w-1/2 rounded-lg overflow-hidden">
-          <PropertyImageCarousel
-            googleEarthUrl={property?.["Google Earth Image URL"]}
-            googleMapsUrl={property?.["Google Maps Image URL"]}
-            address={property?.Address}
-          />
-        </div>
 
-        {/* Map (Right) */}
-        <div className="w-full md:w-1/2 rounded-lg overflow-hidden">
-          {property?.LATITUDE && property?.LONGITUDE ? (
-            <div className="h-96">
-              <MapComponent
-                latitude={property.LATITUDE}
-                longitude={property.LONGITUDE}
-                zoom={12}
-              />
-            </div>
-          ) : (
-            <div className="flex justify-center items-center h-96">
-              <Loader2 className="animate-spin w-8 h-8" />
-            </div>
-          )}
-        </div>
-      </div>
+{/* Map Section */}
+<section className="mb-8">
+  {property?.Latitude && property?.Longitude ? (
+    <div className="h-96 bg-white rounded-lg shadow-lg overflow-hidden">
+      <MapComponent
+        latitude={property.Latitude}
+        longitude={property.Longitude}
+        zoom={12}
+      />
+    </div>
+  ) : (
+    <div className="flex justify-center items-center h-96 bg-white rounded-lg shadow-lg">
+      <Loader2 className="animate-spin w-8 h-8" />
+    </div>
+  )}
+</section>
 
-    {/* Comparable Properties Table */}
-<section>
-  <h2 className="text-xl md:text-2xl font-semibold mb-4">Comparable Properties</h2>
+
+<section className="mt-8">
+  <h2 className="text-xl md:text-2xl font-semibold mb-4">Valuation Metrics</h2>
   <table className="w-full text-left border-collapse">
-    <thead className="border-b border-gray-300">
-      <tr>
-        <th className="px-4 py-2 text-gray-700">Address</th>
-        <th className="px-4 py-2 text-gray-700">Price</th>
-        <th className="px-4 py-2 text-gray-700">Bedrooms</th>
-        <th className="px-4 py-2 text-gray-700">Bathrooms</th>
-        <th className="px-4 py-2 text-gray-700">Lot Size (Acres)</th>
-        <th className="px-4 py-2 text-gray-700">Sqft</th>
-        <th className="px-4 py-2 text-gray-700">Year Built</th>
-        <th className="px-4 py-2 text-gray-700">Distance (mi)</th>
-        <th className="px-4 py-2 text-gray-700">Listing Type</th>
-        <th className="px-4 py-2 text-gray-700">Last Seen</th>
-        <th className="px-4 py-2 text-gray-700">Days on Market</th>
-      </tr>
-    </thead>
     <tbody>
-      {Array.from({ length: 10 }, (_, i) => {
-        const index = i + 1; // 1-based index
-        return (
-          <tr key={index} className="border-b border-gray-200">
-            <td className="px-4 py-2">{String(property?.[`COMPARABLE_FORMATTEDADDRESS_${index}` as keyof PropertyDetails] ?? "N/A")}</td>
-            <td className="px-4 py-2">
-              {property?.[`COMPARABLE_PRICE_${index}` as keyof PropertyDetails]
-                ? `$${Math.round(Number(property[`COMPARABLE_PRICE_${index}` as keyof PropertyDetails])).toLocaleString()}`
-                : "N/A"}
-            </td>
-            <td className="px-4 py-2">{String(property?.[`COMPARABLE_BEDROOMS_${index}` as keyof PropertyDetails] ?? "N/A")}</td>
-            <td className="px-4 py-2">{String(property?.[`COMPARABLE_BATHROOMS_${index}` as keyof PropertyDetails] ?? "N/A")}</td>
-            <td className="px-4 py-2">
-              {property?.[`COMPARABLE_LOTSIZE_${index}` as keyof PropertyDetails]
-                ? (Number(property[`COMPARABLE_LOTSIZE_${index}` as keyof PropertyDetails]) / 43560).toFixed(2)
-                : "N/A"}
-            </td>
-            <td className="px-4 py-2">{String(property?.[`COMPARABLE_SQUAREFOOTAGE_${index}` as keyof PropertyDetails] ?? "N/A")}</td>
-            <td className="px-4 py-2">{String(property?.[`COMPARABLE_YEARBUILT_${index}` as keyof PropertyDetails] ?? "N/A")}</td>
-            <td className="px-4 py-2">{String(property?.[`COMPARABLE_DISTANCE_${index}` as keyof PropertyDetails] ?? "N/A")}</td>
-            <td className="px-4 py-2">{String(property?.[`COMPARABLE_LISTINGTYPE_${index}` as keyof PropertyDetails] ?? "N/A")}</td>
-            <td className="px-4 py-2">{String(property?.[`COMPARABLE_LASTSEENDATE_${index}` as keyof PropertyDetails] ?? "N/A")}</td>
-            <td className="px-4 py-2">{String(property?.[`COMPARABLE_DAYSONMARKET_${index}` as keyof PropertyDetails] ?? "N/A")}</td>
-          </tr>
-        );
-      })}
+      {/* Sale Output Group */}
+<tr className="bg-gray-200">
+  <td className="px-4 py-2 font-semibold" colSpan={2}>
+    Sale Output
+  </td>
+</tr>
+<tr className="border-b border-gray-200">
+  <td className="px-4 py-2">Sale Comp Valuation by sq ft (median)</td>
+  <td className="px-4 py-2">
+    {property?.["Sale Comp Valuation by sq ft (median)"] !== undefined
+      ? `$${Number(property["Sale Comp Valuation by sq ft (median)"]).toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+      : "N/A"}
+  </td>
+</tr>
+<tr className="border-b border-gray-200">
+  <td className="px-4 py-2">Sale Comp Valuation by sq ft (mean)</td>
+  <td className="px-4 py-2">
+    {property?.["Sale Comp Valuation by sq ft (mean)"] !== undefined
+      ? `$${Number(property["Sale Comp Valuation by sq ft (mean)"]).toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+      : "N/A"}
+  </td>
+</tr>
+<tr className="border-b border-gray-200">
+  <td className="px-4 py-2">Sale Comp Valuation by bed (median)</td>
+  <td className="px-4 py-2">
+    {property?.["Sale Comp Valuation by bed (median)"] !== undefined
+      ? `$${Number(property["Sale Comp Valuation by bed (median)"]).toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+      : "N/A"}
+  </td>
+</tr>
+<tr className="border-b border-gray-200">
+  <td className="px-4 py-2">Sale Comp Valuation by bed (mean)</td>
+  <td className="px-4 py-2">
+    {property?.["Sale Comp Valuation by bed (mean)"] !== undefined
+      ? `$${Number(property["Sale Comp Valuation by bed (mean)"]).toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+      : "N/A"}
+  </td>
+</tr>
+
+      {/* Third-party Group */}
+      <tr className="bg-gray-200">
+        <td className="px-4 py-2 font-semibold" colSpan={2}>
+          Third-party
+        </td>
+      </tr>
+      <tr className="border-b border-gray-200">
+        <td className="px-4 py-2">Zillow rent valuation</td>
+        <td className="px-4 py-2">
+          {property?.["Zillow rent valuation"] !== undefined
+            ? `$${Number(property["Rent Zestimate"]).toLocaleString()}`
+            : " - "}
+        </td>
+      </tr>
+      <tr className="border-b border-gray-200">
+        <td className="px-4 py-2">Zillow low estimate</td>
+        <td className="px-4 py-2">
+          {property?.["Zillow low estimate"] !== undefined
+            ? `$${Number(property["Zillow low estimate"]).toLocaleString()}`
+            : "N/A"}
+        </td>
+      </tr>
+      <tr className="border-b border-gray-200">
+        <td className="px-4 py-2">Zillow high estimate</td>
+        <td className="px-4 py-2">
+          {property?.["Zillow high estimate"] !== undefined
+            ? `$${Number(property["Zillow high estimate"]).toLocaleString()}`
+            : "N/A"}
+        </td>
+      </tr>
     </tbody>
   </table>
 </section>
 
+<section className="mb-8">
+  <details className="border rounded shadow-lg">
+    <summary className="bg-white text-black border border-black px-4 py-2 rounded cursor-pointer">
+      View Comps
+    </summary>
+    <div className="p-4">
+      <h2 className="text-xl md:text-2xl font-semibold mb-4">Comparable Sales</h2>
+      <table className="w-full text-left border-collapse">
+        <thead className="border-b border-gray-300">
+          <tr>
+            <th className="px-4 py-2 text-gray-700">Address</th>
+            <th className="px-4 py-2 text-gray-700">Date Sold</th>
+            <th className="px-4 py-2 text-gray-700">Price</th>
+            <th className="px-4 py-2 text-gray-700">Sqft</th>
+            <th className="px-4 py-2 text-gray-700">Bedrooms</th>
+            <th className="px-4 py-2 text-gray-700">Bathrooms</th>
+            <th className="px-4 py-2 text-gray-700">Lot Size</th>
+            <th className="px-4 py-2 text-gray-700">Distance</th>
+            <th className="px-4 py-2 text-gray-700">Comp Quality</th>
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from({ length: 25 }, (_, i) => {
+            const index = i + 1;
+            const sources = [
+              { prefix: "SALE_COMP", label: "SALE", scoreKey: `COMP_SCORE_SALE_COMP_${index}` },
+              { prefix: "REDFIN", label: "REDFIN", scoreKey: `COMP_SCORE_REDFIN_${index}` },
+            ];
+
+            return sources.map(({ prefix, label, scoreKey }) => {
+              const address = property?.[`${prefix}_ADDRESS_${index}` as keyof PropertyDetails];
+              const dateSold = property?.[`${prefix}_DATESOLD_${index}` as keyof PropertyDetails];
+              const price = property?.[`${prefix}_PRICE_${index}` as keyof PropertyDetails];
+              const bedrooms = property?.[`${prefix}_BEDROOMS_${index}` as keyof PropertyDetails];
+              const bathrooms = property?.[`${prefix}_BATHROOMS_${index}` as keyof PropertyDetails];
+              const sqft = property?.[`${prefix}_LIVINGAREA_${index}` as keyof PropertyDetails];
+              const lotSize = property?.[`${prefix}_LOTSIZE_${index}` as keyof PropertyDetails];
+              const distance = property?.[`${prefix}_DISTANCE_FROM_PROPERTY_${index}` as keyof PropertyDetails];
+              const compScore = property?.[scoreKey as keyof PropertyDetails];
+
+              // Extract the raw URL from the property data.
+              const rawUrl = property?.[`${prefix}_URL_${index}` as keyof PropertyDetails] as string | undefined;
+              // If it's a REDFIN comp and the URL exists, prepend "https://www.redfin.com"
+              const compUrl =
+                prefix === "REDFIN" && rawUrl
+                  ? `https://www.redfin.com${rawUrl}`
+                  : rawUrl;
+
+              if (!address && !price && !bedrooms && !bathrooms && !sqft) return null;
+
+              return {
+                key: `${label}_${index}`,
+                row: (
+                  <tr key={`${label}_${index}`} className="border-b border-gray-200">
+                    <td className="px-4 py-2">
+                      <a
+                        href={compUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-500 underline"
+                      >
+                        {String(address) || " - "}
+                      </a>
+                    </td>
+                    <td className="px-4 py-2">
+                      {typeof dateSold === "string" || typeof dateSold === "number"
+                        ? new Date(dateSold).toLocaleDateString("en-US")
+                        : "N/A"}
+                    </td>
+                    <td className="px-4 py-2">
+                      {price ? `$${Number(price).toLocaleString()}` : " - "}
+                    </td>
+                    <td className="px-4 py-2">
+                      {typeof sqft === "number" || typeof sqft === "string" ? sqft : " - "}
+                    </td>
+                    <td className="px-4 py-2">{String(bedrooms) || " - "}</td>
+                    <td className="px-4 py-2">{String(bathrooms) || " - "}</td>
+                    <td className="px-4 py-2">
+                      {lotSize ? `${(Number(lotSize) / 43560).toFixed(2)}` : " - "}
+                    </td>
+                    <td className="px-4 py-2">
+                      {distance ? `${Number(distance).toFixed(2)}` : " - "}
+                    </td>
+                    <td className="px-4 py-2">
+                      {compScore !== undefined
+                        ? typeof compScore === "number"
+                          ? compScore.toFixed(2)
+                          : String(compScore)
+                        : " - "}
+                    </td>
+                  </tr>
+                ),
+                score: typeof compScore === "number" ? compScore : null,
+              };
+            });
+          })
+            .flat()
+            .filter((item): item is { key: string; row: JSX.Element; score: number | null } => item !== null)
+            .sort((a, b) => {
+              if (a.score === null && b.score === null) return 0;
+              if (a.score === null) return 1;
+              if (b.score === null) return -1;
+              return b.score - a.score;
+            })
+            .map((item) => item.row)}
+        </tbody>
+      </table>
+    </div>
+  </details>
+</section>
 
 
-      {/* Action History Table */}
-      <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-        <ActionHistoryTable propertyId={property?._id} />
-      </div>
     </div>
   );
 };

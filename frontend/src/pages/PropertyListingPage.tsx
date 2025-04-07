@@ -36,18 +36,15 @@ const PropertyListingPage = () => {
     "Address",
     "State",
     "County",
-    "LAND_USE",
-    "Principal Amount Owed",
-    "ESTIMATED_VALUE",
+    "Property Type",
     "Foreclosure Sale Date",
-    "Parcel Number",
-    "YEAR_BUILT",
-    "BEDROOMS",
-    "BATHROOMS",
-    "STORIES",
-    "SQUARE_FEET",
-    "HOA_PRESENT",
-    "LOT_ACRES",
+    "Principal Amount Owed",
+    "Zestimate",
+    "Rent Zestimate",
+    "Year Built",
+    "Bedrooms",
+    "Bathrooms",
+    "Living Area (sq ft)",
   ];
   const [searchInput, setSearchInput] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -462,12 +459,6 @@ const initialSortRestored = React.useRef(false);
 
   return (
     <>
-      <div className="flex w-full md:justify-start justify-center bg-gray-800 text-white py-10">
-        <h1 className="md:text-5xl md:pl-20 text-center text-3xl">
-          Welcome {user?.name}
-        </h1>
-      </div>
-
       <div className="text-center py-10 p-2">
         <h2 className="text-5xl font-semibold">
           Search Foreclosures
