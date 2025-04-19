@@ -459,15 +459,7 @@ const initialSortRestored = React.useRef(false);
 
   return (
     <>
-      <div className="text-center py-10 p-2">
-        <h2 className="text-5xl font-semibold">
-          Search Foreclosures
-        </h2>
-        <p className="text-xl my-4">
-          We offer the most comprehensive foreclosure database in the world.
-          <br />
-          Find, research, get images, and bid remotely.
-        </p>
+      <div className="text-center py-5 p-0">
       </div>
 
       <div className="mx-4 md:mx-20">

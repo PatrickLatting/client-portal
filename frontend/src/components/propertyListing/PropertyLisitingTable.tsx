@@ -419,7 +419,7 @@ const PropertyListingTable: React.FC<DynamicGridProps> = ({
         </div>
       )}
    
-      <div className="w-full h-96 bg-white overflow-x-hidden rounded-xl border">
+      <div className="w-full h-[650px] bg-white overflow-x-hidden rounded-xl border">
       <AgGridReact
           ref={gridRef}
           rowData={data}
