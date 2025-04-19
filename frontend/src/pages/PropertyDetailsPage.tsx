@@ -607,115 +607,118 @@ const isPropertyDataIncomplete = (property: PropertyDetails | null) => {
   </table>
 </section>
 
-<section className="mb-8">
-  <details className="border rounded shadow-lg">
-    <summary className="bg-white text-black border border-black px-4 py-2 rounded cursor-pointer">
-      View Comps
-    </summary>
-    <div className="p-4">
-      <h2 className="text-xl md:text-2xl font-semibold mb-4">Comparable Sales</h2>
-      <table className="w-full text-left border-collapse">
-        <thead className="border-b border-gray-300">
-          <tr>
-            <th className="px-4 py-2 text-gray-700">Address</th>
-            <th className="px-4 py-2 text-gray-700">Date Sold</th>
-            <th className="px-4 py-2 text-gray-700">Price</th>
-            <th className="px-4 py-2 text-gray-700">Sqft</th>
-            <th className="px-4 py-2 text-gray-700">Bedrooms</th>
-            <th className="px-4 py-2 text-gray-700">Bathrooms</th>
-            <th className="px-4 py-2 text-gray-700">Lot Size</th>
-            <th className="px-4 py-2 text-gray-700">Distance</th>
-            <th className="px-4 py-2 text-gray-700">Comp Quality</th>
-          </tr>
-        </thead>
-        <tbody>
-          {Array.from({ length: 25 }, (_, i) => {
+<section className="mb-16">
+  <div className="border p-6">
+    <h2 className="text-xl md:text-2xl font-semibold mb-4">Comparable Sales</h2>
+    <table className="w-full text-left border-collapse text-sm">
+      <thead className="border-b border-gray-300">
+        <tr>
+          <th className="px-4 py-2 text-gray-700">Address</th>
+          <th className="px-4 py-2 text-gray-700">Date Sold</th>
+          <th className="px-4 py-2 text-gray-700">Price</th>
+          <th className="px-4 py-2 text-gray-700">Sqft</th>
+          <th className="px-4 py-2 text-gray-700">Bedrooms</th>
+          <th className="px-4 py-2 text-gray-700">Bathrooms</th>
+          <th className="px-4 py-2 text-gray-700">Lot Size</th>
+          <th className="px-4 py-2 text-gray-700">Distance</th>
+          <th className="px-4 py-2 text-gray-700">Comp Quality</th>
+        </tr>
+      </thead>
+      <tbody>
+        {(() => {
+          const comps = [];
+
+          for (let i = 0; i < 25; i++) {
             const index = i + 1;
             const sources = [
               { prefix: "SALE_COMP", label: "SALE", scoreKey: `COMP_SCORE_SALE_COMP_${index}` },
               { prefix: "REDFIN", label: "REDFIN", scoreKey: `COMP_SCORE_REDFIN_${index}` },
             ];
 
-            return sources.map(({ prefix, label, scoreKey }) => {
-              const address = property?.[`${prefix}_ADDRESS_${index}` as keyof PropertyDetails];
-              const dateSold = property?.[`${prefix}_DATESOLD_${index}` as keyof PropertyDetails];
-              const price = property?.[`${prefix}_PRICE_${index}` as keyof PropertyDetails];
-              const bedrooms = property?.[`${prefix}_BEDROOMS_${index}` as keyof PropertyDetails];
-              const bathrooms = property?.[`${prefix}_BATHROOMS_${index}` as keyof PropertyDetails];
-              const sqft = property?.[`${prefix}_LIVINGAREA_${index}` as keyof PropertyDetails];
-              const lotSize = property?.[`${prefix}_LOTSIZE_${index}` as keyof PropertyDetails];
-              const distance = property?.[`${prefix}_DISTANCE_FROM_PROPERTY_${index}` as keyof PropertyDetails];
-              const compScore = property?.[scoreKey as keyof PropertyDetails];
+            for (const { prefix, label, scoreKey } of sources) {
+              const address = (property as any)[`${prefix}_ADDRESS_${index}`];
+              const dateSold = (property as any)[`${prefix}_DATESOLD_${index}`];
+              const price = (property as any)[`${prefix}_PRICE_${index}`];
+              const bedrooms = (property as any)[`${prefix}_BEDROOMS_${index}`];
+              const bathrooms = (property as any)[`${prefix}_BATHROOMS_${index}`];
+              const sqft = (property as any)[`${prefix}_LIVINGAREA_${index}`];
+              const lotSize = (property as any)[`${prefix}_LOTSIZE_${index}`];
+              const distance = (property as any)[`${prefix}_DISTANCE_FROM_PROPERTY_${index}`];
+              const compScore = (property as any)[scoreKey];
+              const rawUrl = (property as any)[`${prefix}_URL_${index}`] as string | undefined;
+              const compUrl = prefix === "REDFIN" && rawUrl ? `https://www.redfin.com${rawUrl}` : rawUrl;
 
-              // Extract the raw URL from the property data.
-              const rawUrl = property?.[`${prefix}_URL_${index}` as keyof PropertyDetails] as string | undefined;
-              // If it's a REDFIN comp and the URL exists, prepend "https://www.redfin.com"
-              const compUrl =
-                prefix === "REDFIN" && rawUrl
-                  ? `https://www.redfin.com${rawUrl}`
-                  : rawUrl;
+              if (!address && !price && !bedrooms && !bathrooms && !sqft) continue;
 
-              if (!address && !price && !bedrooms && !bathrooms && !sqft) return null;
-
-              return {
+              comps.push({
                 key: `${label}_${index}`,
-                row: (
-                  <tr key={`${label}_${index}`} className="border-b border-gray-200">
-                    <td className="px-4 py-2">
-                      <a
-                        href={compUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-500 underline"
-                      >
-                        {String(address) || " - "}
-                      </a>
-                    </td>
-                    <td className="px-4 py-2">
-                      {typeof dateSold === "string" || typeof dateSold === "number"
-                        ? new Date(dateSold).toLocaleDateString("en-US")
-                        : "N/A"}
-                    </td>
-                    <td className="px-4 py-2">
-                      {price ? `$${Number(price).toLocaleString()}` : " - "}
-                    </td>
-                    <td className="px-4 py-2">
-                      {typeof sqft === "number" || typeof sqft === "string" ? sqft : " - "}
-                    </td>
-                    <td className="px-4 py-2">{String(bedrooms) || " - "}</td>
-                    <td className="px-4 py-2">{String(bathrooms) || " - "}</td>
-                    <td className="px-4 py-2">
-                      {lotSize ? `${(Number(lotSize) / 43560).toFixed(2)}` : " - "}
-                    </td>
-                    <td className="px-4 py-2">
-                      {distance ? `${Number(distance).toFixed(2)}` : " - "}
-                    </td>
-                    <td className="px-4 py-2">
-                      {compScore !== undefined
-                        ? typeof compScore === "number"
-                          ? compScore.toFixed(2)
-                          : String(compScore)
-                        : " - "}
-                    </td>
-                  </tr>
-                ),
-                score: typeof compScore === "number" ? compScore : null,
-              };
-            });
-          })
-            .flat()
-            .filter((item): item is { key: string; row: JSX.Element; score: number | null } => item !== null)
-            .sort((a, b) => {
-              if (a.score === null && b.score === null) return 0;
-              if (a.score === null) return 1;
-              if (b.score === null) return -1;
-              return b.score - a.score;
-            })
-            .map((item) => item.row)}
-        </tbody>
-      </table>
-    </div>
-  </details>
+                address,
+                dateSold,
+                price,
+                bedrooms,
+                bathrooms,
+                sqft,
+                lotSize,
+                distance: distance ? Number(distance) : Infinity,
+                compScore,
+                compScoreNumeric: typeof compScore === "number" ? compScore : null,
+                compUrl,
+              });
+            }
+          }
+
+          comps.sort((a, b) => {
+            if (a.compScoreNumeric !== null && b.compScoreNumeric !== null) {
+              return b.compScoreNumeric - a.compScoreNumeric;
+            }
+            if (a.compScoreNumeric !== null) return -1;
+            if (b.compScoreNumeric !== null) return 1;
+            return a.distance - b.distance;
+          });
+
+          return comps.map((row) => (
+            <tr key={row.key} className="border-b border-gray-200">
+              <td className="px-4 py-2">
+                <a href={row.compUrl} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">
+                  {String(row.address) || " - "}
+                </a>
+              </td>
+              <td className="px-4 py-2">
+                {typeof row.dateSold === "string" || typeof row.dateSold === "number"
+                  ? new Date(row.dateSold).toLocaleDateString("en-US")
+                  : "N/A"}
+              </td>
+              <td className="px-4 py-2">{row.price ? `$${Number(row.price).toLocaleString()}` : " - "}</td>
+              <td className="px-4 py-2">{row.sqft || " - "}</td>
+              <td className="px-4 py-2">{String(row.bedrooms) || " - "}</td>
+              <td className="px-4 py-2">{String(row.bathrooms) || " - "}</td>
+              <td className="px-4 py-2">
+                {row.lotSize ? `${(Number(row.lotSize) / 43560).toFixed(2)}` : " - "}
+              </td>
+              <td className="px-4 py-2">
+                {row.distance !== Infinity ? row.distance.toFixed(2) : " - "}
+              </td>
+              <td className="px-4 py-2">
+                {row.compScore !== undefined ? (
+                  typeof row.compScore === "number" ? (
+                    row.compScore.toFixed(2)
+                  ) : (
+                    <ul className="list-disc list-inside text-gray-700">
+                      {String(row.compScore)
+                        .split(",")
+                        .map((reason, i) => <li key={i}>{reason.split(":")[0].trim()}</li>)}
+                    </ul>
+                  )
+                ) : (
+                  " - "
+                )}
+              </td>
+            </tr>
+          ));
+        })()}
+      </tbody>
+    </table>
+  </div>
 </section>
 
 
