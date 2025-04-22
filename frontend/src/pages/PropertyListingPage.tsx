@@ -1,5 +1,12 @@
 // PropertyListingPage.tsx
-import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
 import {
@@ -19,7 +26,10 @@ import LoadingSpinner from "../components/LoadingSpinner ";
 import { DateRange } from "react-day-picker";
 import { format } from "date-fns";
 import React from "react";
-
+import { MapIcon } from "lucide-react"; // Add this import
+const PropertyListingMap = lazy(
+  () => import("../components/propertyListing/PropertyListingMap")
+);
 const MultiSelector = lazy(
   () => import("../components/propertyListing/MultiSelect")
 );
@@ -28,7 +38,7 @@ const PropertyListingTable = lazy(
 );
 const DateRangePicker = lazy(
   () => import("../components/propertyListing/DateRangePicker")
-)
+);
 // Pagination is now integrated within the PropertyListingTable component
 
 const PropertyListingPage = () => {
@@ -50,13 +60,27 @@ const PropertyListingPage = () => {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [properties, setProperties] = useState<PropertyDetails[]>([]);
   const [loading, setLoading] = useState(true);
+  const [mapTotalCount, setMapTotalCount] = useState(0);
   const [initialLoad, setInitialLoad] = useState(true);
-  
+  const [allMapProperties, setAllMapProperties] = useState<PropertyDetails[]>(
+    []
+  );
+  const [mapLoading, setMapLoading] = useState(false);
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [itemsPerPage] = useState(25); // Set to match the table's paginationPageSize
+  // Updated itemsPerPage to support user selection
+  const [itemsPerPage, setItemsPerPage] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem("itemsPerPage");
+      return saved ? JSON.parse(saved) : 100; // Changed from 25 to 100
+    } catch {
+      return 100; // Changed from 25 to 100
+    }
+  });
 
+  const [showMap, setShowMap] = useState(false);
   const [allCounties, setAllCounties] = useState<
     { label: string; value: string }[]
   >([]);
@@ -72,9 +96,9 @@ const PropertyListingPage = () => {
   const [allOwnerOccupancy, setAllOwnerOccupancy] = useState<
     { label: string; value: string }[]
   >([]);
-  const [sortParams, setSortParams] = useState<{ 
-    colId: string; 
-    sort: 'asc' | 'desc' | null 
+  const [sortParams, setSortParams] = useState<{
+    colId: string;
+    sort: "asc" | "desc" | null;
   } | null>(null);
   // Initialize filter states from localStorage with proper typing
   const [selectedCounty, setSelectedCounty] = useState<string[]>(() => {
@@ -191,6 +215,14 @@ const PropertyListingPage = () => {
 
   const { user } = useUser();
 
+  // Handle items per page change
+  const handleItemsPerPageChange = (value: number) => {
+    console.log("Changing items per page to:", value); // Add this log
+    setItemsPerPage(value);
+    localStorage.setItem("itemsPerPage", JSON.stringify(value));
+    setCurrentPage(1);
+  };
+
   // Fetch properties based on current page and filters
   const fetchProperties = useMemo(() => {
     return async () => {
@@ -202,7 +234,7 @@ const PropertyListingPage = () => {
         const toDate = selectedDataRange?.to
           ? format(selectedDataRange.to, "M/d/yyyy")
           : undefined;
-  
+
         const queryParams = new URLSearchParams({
           search: debouncedSearch,
           page: currentPage.toString(),
@@ -231,19 +263,37 @@ const PropertyListingPage = () => {
             estimatedTo: selectedEstimatedValue.to,
           }),
           // Add sort parameters if available
-          ...(sortParams && sortParams.colId && sortParams.sort && { 
-            sortColumn: sortParams.colId,
-            sortDirection: sortParams.sort
-          }),
+          ...(sortParams &&
+            sortParams.colId &&
+            sortParams.sort && {
+              sortColumn: sortParams.colId,
+              sortDirection: sortParams.sort,
+            }),
         });
-        
+
         const res = await axios.get(
           `${process.env.REACT_APP_API_BASE_URL}/get-properties?${queryParams}`
         );
-  
-        setProperties(res.data.data);
+
+        // If user has selected a specific items per page, slice the data accordingly
+        const allData = res.data.data;
+        let filteredData = allData;
+        let calculatedTotalPages = res.data.meta.totalPages;
+
+        // Only slice the data if user has explicitly set items per page
+        const userSelectedItemsPerPage = localStorage.getItem("itemsPerPage");
+        if (userSelectedItemsPerPage) {
+          const startIndex = (currentPage - 1) * itemsPerPage;
+          const endIndex = startIndex + itemsPerPage;
+          filteredData = allData.slice(startIndex, endIndex);
+
+          // Recalculate total pages based on user's selection
+          calculatedTotalPages = Math.ceil(allData.length / itemsPerPage);
+        }
+
+        setProperties(filteredData);
         setTotalPages(res.data.meta.totalPages);
-  
+
         // Update filter options only on initial load
         if (initialLoad) {
           setAllCounties(
@@ -272,14 +322,14 @@ const PropertyListingPage = () => {
               value: state,
             }))
           );
-  
+
           setAllOwnerOccupancy(
             res.data.allOwnerOccupancy.map((occupancy: string) => ({
               label: occupancy,
               value: occupancy,
             }))
           );
-  
+
           setInitialLoad(false);
         }
       } catch (err) {
@@ -305,14 +355,14 @@ const PropertyListingPage = () => {
   ]);
 
   // 2. Add a reference to track initial sort restoration
-const initialSortRestored = React.useRef(false);
+  const initialSortRestored = React.useRef(false);
   console.log("properties", properties);
   // Handle page change
   // Handle page change
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
     // Scroll to top when changing pages
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   // Optimized debounce effect
@@ -327,14 +377,18 @@ const initialSortRestored = React.useRef(false);
     return () => clearTimeout(handler);
   }, [searchInput]);
 
-  const handleSortChanged = (sortModel: { colId: string, sort: 'asc' | 'desc' | null }) => {
+  const handleSortChanged = (sortModel: {
+    colId: string;
+    sort: "asc" | "desc" | null;
+  }) => {
     // Only update if the sort has actually changed
-    if (!sortParams || 
-        sortParams.colId !== sortModel.colId || 
-        sortParams.sort !== sortModel.sort) {
-      
+    if (
+      !sortParams ||
+      sortParams.colId !== sortModel.colId ||
+      sortParams.sort !== sortModel.sort
+    ) {
       setSortParams(sortModel);
-      
+
       // Just mark that initial sort has been restored
       if (!initialSortRestored.current) {
         initialSortRestored.current = true;
@@ -342,8 +396,8 @@ const initialSortRestored = React.useRef(false);
       // Remove the setCurrentPage(1) entirely
     }
   };
-  
-  // Effect for filter or page changes
+
+
   useEffect(() => {
     fetchProperties();
   }, [
@@ -357,9 +411,10 @@ const initialSortRestored = React.useRef(false);
     selectedDataRange,
     selectedYearBuilt,
     selectedEstimatedValue,
+    itemsPerPage, // Add itemsPerPage to dependencies
     sortParams, // Keep sortParams here
   ]);
-  // Reset to first page when filters change
+ 
   useEffect(() => {
     if (!initialLoad) {
       setCurrentPage(1);
@@ -374,7 +429,7 @@ const initialSortRestored = React.useRef(false);
     selectedDataRange,
     selectedYearBuilt,
     selectedEstimatedValue,
-    initialLoad
+    initialLoad,
   ]);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -435,7 +490,114 @@ const initialSortRestored = React.useRef(false);
       })
     );
   };
+ 
+  const fetchAllPropertiesForMap = useCallback(async () => {
+    // Set loading state for map
+    setMapLoading(true);
+    try {
+      // Create query params with all current filters
+      const queryParams = new URLSearchParams({
+        // Include all the same filters as the table view
+        search: debouncedSearch,
+        ...(selectedCounty.length && { county: selectedCounty.join(",") }),
+        ...(selectedState.length && { state: selectedState.join(",") }),
+        ...(selectedOwnerType.length && {
+          ownerType: selectedOwnerType.join(","),
+        }),
+        ...(selectedPropertyType.length && {
+          propertyType: selectedPropertyType.join(","),
+        }),
+        ...(selectedOwnerOccupancy.length && {
+          ownerOccupancy: selectedOwnerOccupancy.join(","),
+        }),
+        // Date range filters
+        ...(selectedDataRange?.from && {
+          fromDate: format(selectedDataRange.from, "M/d/yyyy"),
+        }),
+        ...(selectedDataRange?.to && {
+          toDate: format(selectedDataRange.to, "M/d/yyyy"),
+        }),
+        // Year built filters
+        ...(selectedYearBuilt.from && {
+          yearBuiltFrom: selectedYearBuilt.from,
+        }),
+        ...(selectedYearBuilt.to && { yearBuiltTo: selectedYearBuilt.to }),
+        // Estimated value filters
+        ...(selectedEstimatedValue.from && {
+          estimatedFrom: selectedEstimatedValue.from,
+        }),
+        ...(selectedEstimatedValue.to && {
+          estimatedTo: selectedEstimatedValue.to,
+        }),
+      });
 
+      const res = await axios.get(
+        `${process.env.REACT_APP_API_BASE_URL}/get-all-map-properties?${queryParams}`
+      );
+
+      setAllMapProperties(res.data.properties);
+      setMapTotalCount(res.data.totalMatchingProperties);
+    } catch (err) {
+      console.error("Error fetching filtered properties for map:", err);
+    } finally {
+      setMapLoading(false);
+    }
+  }, [
+    debouncedSearch,
+    selectedCounty,
+    selectedState,
+    selectedOwnerType,
+    selectedPropertyType,
+    selectedOwnerOccupancy,
+    selectedDataRange,
+    selectedYearBuilt,
+    selectedEstimatedValue,
+  ]);
+
+  // Update toggleMapView to fetch ALL properties when opening the map
+  const toggleMapView = () => {
+    if (!showMap) {
+      // Fetch ALL properties for map when opening
+      fetchAllPropertiesForMap();
+    } else {
+      // Reset map properties when closing to free memory
+      setAllMapProperties([]);
+      setMapTotalCount(0);
+    }
+    setShowMap(!showMap);
+  };
+  const hasActiveFilters = () => {
+    return (
+      selectedCounty.length > 0 ||
+      selectedState.length > 0 ||
+      selectedOwnerType.length > 0 ||
+      selectedPropertyType.length > 0 ||
+      selectedOwnerOccupancy.length > 0 ||
+      selectedDataRange?.from !== undefined ||
+      selectedYearBuilt?.from !== undefined ||
+      selectedYearBuilt?.to !== undefined ||
+      selectedEstimatedValue?.from !== undefined ||
+      selectedEstimatedValue?.to !== undefined ||
+      debouncedSearch !== ""
+    );
+  };
+  useEffect(() => {
+    if (showMap) {
+      fetchAllPropertiesForMap();
+    }
+  }, [
+    showMap,
+    debouncedSearch,
+    selectedCounty,
+    selectedState,
+    selectedOwnerType,
+    selectedPropertyType,
+    selectedOwnerOccupancy,
+    selectedDataRange,
+    selectedYearBuilt,
+    selectedEstimatedValue,
+    fetchAllPropertiesForMap,
+  ]);
   const clearAllFilters = () => {
     setSelectedCounty([]);
     setSelectedState([]);
@@ -456,15 +618,60 @@ const initialSortRestored = React.useRef(false);
     localStorage.removeItem("selectedYearBuilt");
     localStorage.removeItem("selectedEstimatedValue");
   };
-
+  console.log("properties:", properties);
   return (
     <>
-      <div className="text-center py-5 p-0">
-      </div>
-
+      <div className="text-center py-5 p-0"></div>
+    
+      {showMap && (
+        <Suspense
+          fallback={
+            <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+              <div className="bg-white p-8 rounded-lg">
+                <LoadingSpinner />
+                <p className="mt-4 text-center">Loading map view...</p>
+              </div>
+            </div>
+          }
+        >
+          <PropertyListingMap
+            properties={
+              allMapProperties.length > 0 ? allMapProperties : properties
+            }
+            totalCount={mapTotalCount}
+            loading={mapLoading}
+            onClose={toggleMapView}
+            onRefresh={fetchAllPropertiesForMap}
+          />
+        </Suspense>
+      )}
       <div className="mx-4 md:mx-20">
+        <div className="flex items-center space-x-2 my-3 flex-1">
+          <Button
+            onClick={toggleMapView}
+            disabled={mapLoading}
+            className="h-12 w-full text-white py-3 px-4 rounded-md hover:bg-gray-800 transition-colors duration-200"
+          >
+            {mapLoading ? (
+              <>
+                <div className="animate-spin h-4 w-4 border-2 border-white rounded-full border-t-transparent mr-2"></div>
+                <span>Loading Map...</span>
+              </>
+            ) : (
+              <>
+                <MapIcon size={18} className="mr-2" />
+                <span>
+                  {/* Dynamic text based on whether filters are applied */}
+                  {hasActiveFilters()
+                    ? "View Filtered Properties on Map"
+                    : "Explore All Properties on Map"}
+                </span>
+              </>
+            )}
+          </Button>
+        </div>
         <div className="flex items-center justify-between mx-auto mb-4">
-          <div className="flex items-center space-x-2 flex-1">
+          <div className="flex items-center space-x-2 flex-1  gap-3 md:flex flex-col md:flex-row md:w-full">
             <Input
               type="text"
               className="h-12 placeholder:text-gray-500 font-medium"
@@ -472,9 +679,14 @@ const initialSortRestored = React.useRef(false);
               value={searchInput}
               onChange={handleSearch}
             />
+
+            {/* Download dropdown */}
             <DropdownMenu>
-              <DropdownMenuTrigger disabled={properties.length === 0}>
-                <div className="h-12 bg-black text-white py-3 px-2 rounded-md">
+              <DropdownMenuTrigger
+                disabled={properties.length === 0}
+                className=" md:w-fit w-full"
+              >
+                <div className="h-12 bg-black text-white py-3 px-4 rounded-md hover:bg-gray-800 transition-colors duration-200">
                   Download
                 </div>
               </DropdownMenuTrigger>
@@ -492,33 +704,70 @@ const initialSortRestored = React.useRef(false);
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            {/* Items per page dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                disabled={properties.length === 0}
+                className="md:w-[200px] w-full"
+              >
+                <div className="h-12 bg-black text-white py-3 px-4 rounded-md hover:bg-gray-800 transition-colors duration-200">
+                  {itemsPerPage} per page
+                </div>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem
+                  onClick={() => handleItemsPerPageChange(100)}
+                  className={itemsPerPage === 15 ? "bg-gray-100" : ""}
+                >
+                  100 per page
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => handleItemsPerPageChange(15)}
+                  className={itemsPerPage === 15 ? "bg-gray-100" : ""}
+                >
+                  15 per page
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => handleItemsPerPageChange(25)}
+                  className={itemsPerPage === 25 ? "bg-gray-100" : ""}
+                >
+                  25 per page
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => handleItemsPerPageChange(35)}
+                  className={itemsPerPage === 35 ? "bg-gray-100" : ""}
+                >
+                  35 per page
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
         <div className="my-10 flex flex-wrap lg:flex-nowrap justify-between gap-6">
           <div className="w-full lg:w-1/5 space-y-6">
-          {(selectedCounty.length > 0 ||
-            selectedState.length > 0 ||
-            selectedOwnerType.length > 0 ||
-            selectedPropertyType.length > 0 ||
-            selectedOwnerOccupancy.length > 0 ||
-            selectedDataRange?.from !== undefined ||
-            selectedYearBuilt?.from !== undefined ||
-            selectedYearBuilt?.to !== undefined ||
-            selectedEstimatedValue?.from !== undefined ||
-            selectedEstimatedValue?.to !== undefined ||
-            selectedYearBuilt?.from === "" ||
-            selectedYearBuilt?.to === "" ||
-            selectedEstimatedValue?.from === "" ||
-            selectedEstimatedValue?.to === "") && (
-            <Button
-              variant="ghost"
-              onClick={clearAllFilters}
-              className="ml-4 text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300"
-            >
-              Clear all filters
-            </Button>
-          )}
+            {(selectedCounty.length > 0 ||
+              selectedState.length > 0 ||
+              selectedOwnerType.length > 0 ||
+              selectedPropertyType.length > 0 ||
+              selectedOwnerOccupancy.length > 0 ||
+              selectedDataRange?.from !== undefined ||
+              selectedYearBuilt?.from !== undefined ||
+              selectedYearBuilt?.to !== undefined ||
+              selectedEstimatedValue?.from !== undefined ||
+              selectedEstimatedValue?.to !== undefined ||
+              selectedYearBuilt?.from === "" ||
+              selectedYearBuilt?.to === "" ||
+              selectedEstimatedValue?.from === "" ||
+              selectedEstimatedValue?.to === "") && (
+              <Button
+                variant="ghost"
+                onClick={clearAllFilters}
+                className="ml-4 text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              >
+                Clear all filters
+              </Button>
+            )}
             <Suspense fallback={<Skeleton className="h-12" />}>
               <MultiSelector
                 key={selectedCounty.join(",")}
@@ -592,7 +841,7 @@ const initialSortRestored = React.useRef(false);
             <div className="p-3 border-gray-200 border rounded-md">
               <div>Year Built</div>
               <div className="flex flex-row">
-              <Input
+                <Input
                   onChange={(e) => {
                     setSelectedYearBuilt((prevState) => ({
                       ...prevState,
@@ -614,19 +863,19 @@ const initialSortRestored = React.useRef(false);
                 />
                 <div className="p-1 font-bold">-</div>
                 <Input
-                 onChange={(e) => {
-                  setSelectedYearBuilt((prevState) => ({
-                    ...prevState,
-                    to: e.target.value || "",
-                  }));
-                  localStorage.setItem(
-                    "selectedYearBuilt",
-                    JSON.stringify({
-                      ...selectedYearBuilt,
+                  onChange={(e) => {
+                    setSelectedYearBuilt((prevState) => ({
+                      ...prevState,
                       to: e.target.value || "",
-                    })
-                  );
-                }}
+                    }));
+                    localStorage.setItem(
+                      "selectedYearBuilt",
+                      JSON.stringify({
+                        ...selectedYearBuilt,
+                        to: e.target.value || "",
+                      })
+                    );
+                  }}
                   value={selectedYearBuilt.to}
                   type="number"
                   placeholder="E.g 2015"
@@ -692,19 +941,19 @@ const initialSortRestored = React.useRef(false);
                   }
                 >
                   <div className="transition-opacity duration-300 ease-in-out">
-                  <PropertyListingTable
-                    data={properties}
-                    selectedColumns={selectedColumns}
-                    paginationData={{
-                      currentPage,
-                      totalPages,
-                      onPageChange: handlePageChange
-                    }}
-                    onSortChanged={handleSortChanged} // Add the sort handler
-                  />
+                    <PropertyListingTable
+                      data={properties}
+                      selectedColumns={selectedColumns}
+                      paginationData={{
+                        currentPage,
+                        totalPages,
+                        onPageChange: handlePageChange,
+                      }}
+                      onSortChanged={handleSortChanged} // Add the sort handler
+                    />
                   </div>
                 </Suspense>
-                
+
                 {/* Pagination component */}
                 {/* Pagination is now handled by the PropertyListingTable component */}
               </>

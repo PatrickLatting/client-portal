@@ -10,7 +10,7 @@ const propertiesRouter = express.Router();
 propertiesRouter.get("/get-properties", async (req: Request, res: Response) => {
   try {
     const page = Math.max(parseInt(req.query.page as string, 10) || 1, 1);
-    const limit = 100;
+    const limit = parseInt(req.query.limit as string, 10) || 100;
     const skip = (page - 1) * limit;
 
     const search = (req.query.search as string) || "";
@@ -192,6 +192,209 @@ propertiesRouter.get("/get-properties", async (req: Request, res: Response) => {
     });
   }
 });
+
+
+
+propertiesRouter.get("/get-all-map-properties", async (req: Request, res: Response) => {
+  try {
+    console.log("Fetching filtered properties for map view");
+
+    // Set a reasonable limit for map properties
+    const MAP_PROPERTIES_LIMIT = 10000;
+
+    // Extract all the same filter parameters as in get-properties endpoint
+    const search = (req.query.search as string) || "";
+    const county = (req.query.county as string) || "";
+    const propertyType = (req.query.propertyType as string) || "";
+    const ownerType = (req.query.ownerType as string) || "";
+    const state = (req.query.state as string) || "";
+    const ownerOccupancy = (req.query.ownerOccupancy as string) || "";
+    const fromDate = (req.query.fromDate as string) || undefined;
+    const toDate = (req.query.toDate as string) || undefined;
+    const yearBuiltFrom = parseInt(req.query.yearBuiltFrom as string, 10);
+    const yearBuiltTo = parseInt(req.query.yearBuiltTo as string, 10);
+    const estimatedFrom = parseFloat(req.query.estimatedFrom as string);
+    const estimatedTo = parseFloat(req.query.estimatedTo as string);
+
+    // Create filter object (same logic as in get-properties)
+    const filter: any = {
+      // Always require valid coordinates for map display
+      Latitude: { $exists: true, $ne: null },
+      Longitude: { $exists: true, $ne: null },
+      $expr: {
+        $and: [
+          { $ne: [{ $type: "$Latitude" }, "null"] },
+          { $ne: [{ $type: "$Longitude" }, "null"] }
+        ]
+      }
+    };
+
+    // Handle date range filter
+    if (fromDate || toDate) {
+      filter.SALE_DATE_1 = {};
+      if (fromDate) {
+        filter.SALE_DATE_1.$gte = fromDate;
+      }
+      if (toDate) {
+        filter.SALE_DATE_1.$lte = toDate;
+      }
+    }
+
+    // Handle search query
+    if (search && search !== "") {
+      filter.$or = [
+        { Address: { $regex: search, $options: "i" } },
+        { County: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    // Handle county query
+    if (county && county !== "") {
+      const counties = county.split(",").map((item) => item.trim());
+      filter.County = {
+        $in: counties.map((county) => new RegExp(county, "i")),
+      };
+    }
+
+    // Handle property type query
+    if (propertyType && propertyType !== "") {
+      const propertyTypes = propertyType.split(",").map((item) => item.trim());
+      filter.LAND_USE = {
+        $in: propertyTypes.map((type) => new RegExp(type, "i")),
+      };
+    }
+
+    // Handle owner type query
+    if (ownerType && ownerType !== "") {
+      const ownerTypes = ownerType.split(",").map((item) => item.trim());
+      filter.OWNERSHIP_TYPE = {
+        $in: ownerTypes.map((type) => new RegExp(type, "i")),
+      };
+    }
+
+    // Handle state query
+    if (state && state !== "") {
+      const states = state.split(",").map((item) => item.trim());
+      filter.State = {
+        $in: states.map((stateItem) => new RegExp(stateItem, "i")),
+      };
+    }
+
+    // Handle owner occupancy query
+    if (ownerOccupancy && ownerOccupancy !== "") {
+      const ownerOccupancies = ownerOccupancy
+        .split(",")
+        .map((item) => item.trim());
+      filter.OWNER_OCCUPANCY = {
+        $in: ownerOccupancies.map((occupancy) => new RegExp(occupancy, "i")),
+      };
+    }
+
+    // Handle year built filter
+    if (!isNaN(yearBuiltFrom) || !isNaN(yearBuiltTo)) {
+      filter.YEAR_BUILT = {};
+      if (!isNaN(yearBuiltFrom)) {
+        filter.YEAR_BUILT.$gte = yearBuiltFrom;
+      }
+      if (!isNaN(yearBuiltTo)) {
+        filter.YEAR_BUILT.$lte = yearBuiltTo;
+      }
+    }
+
+    // Handle estimated value filter
+    if (!isNaN(estimatedFrom) || !isNaN(estimatedTo)) {
+      filter.ESTIMATED_VALUE = {};
+      if (!isNaN(estimatedFrom)) {
+        filter.ESTIMATED_VALUE.$gte = estimatedFrom;
+      }
+      if (!isNaN(estimatedTo)) {
+        filter.ESTIMATED_VALUE.$lte = estimatedTo;
+      }
+    }
+
+    // Use MongoDB aggregation pipeline with filters applied
+    const properties = await Properties.aggregate([
+      // Apply all our filters
+      { $match: filter },
+      // Limit results
+      { $limit: MAP_PROPERTIES_LIMIT },
+      // Project only the fields we need for the map
+      {
+        $project: {
+          _id: 1,
+          Address: 1,
+          State: 1,
+          County: 1,
+          LAND_USE: 1,
+          SALE_DATE_1: 1,
+          PRINCIPAL_AMOUNT: 1,
+          Latitude: 1,
+          Longitude: 1,
+          ESTIMATED_VALUE: 1,
+          RENT_ZESTIMATE: 1,
+          SQUARE_FEET: 1,
+          BEDROOMS: 1,
+          BATHROOMS: 1,
+          YEAR_BUILT: 1,
+          OWNER_OCCUPANCY: 1,
+          OWNERSHIP_TYPE: 1
+        }
+      }
+    ], { allowDiskUse: true });
+
+    console.log(`Retrieved ${properties.length} filtered properties for map`);
+
+    // Get total count of properties matching our filter
+    const countResult = await Properties.aggregate([
+      { $match: filter },
+      { $count: "total" }
+    ], { allowDiskUse: true });
+
+    const totalMatchingProperties = countResult.length > 0 ? countResult[0].total : 0;
+
+    // Map the properties to the format needed for the frontend
+    const mapProperties = properties.map((prop: {
+      _id: any; Address: any; State: any; County: any; LAND_USE: any;
+      SALE_DATE_1: any; PRINCIPAL_AMOUNT: any; Latitude: any; Longitude: any;
+      ESTIMATED_VALUE: any; RENT_ZESTIMATE: any; SQUARE_FEET: any;
+      BEDROOMS: any; BATHROOMS: any; YEAR_BUILT: any;
+      OWNER_OCCUPANCY: any; OWNERSHIP_TYPE: any;
+    }) => ({
+      _id: prop._id,
+      Address: prop.Address,
+      State: prop.State,
+      County: prop.County,
+      "Property Type": prop.LAND_USE,
+      "Foreclosure Sale Date": prop.SALE_DATE_1,
+      "Principal Amount Owed": prop.PRINCIPAL_AMOUNT,
+      Latitude: prop.Latitude,
+      Longitude: prop.Longitude,
+      Zestimate: prop.ESTIMATED_VALUE,
+      "Rent Zestimate": prop.RENT_ZESTIMATE,
+      "Living Area (sq ft)": prop.SQUARE_FEET,
+      Bedrooms: prop.BEDROOMS,
+      Bathrooms: prop.BATHROOMS,
+      "Year Built": prop.YEAR_BUILT,
+      OWNER_OCCUPANCY: prop.OWNER_OCCUPANCY,
+      OWNERSHIP_TYPE: prop.OWNERSHIP_TYPE,
+    }));
+
+    res.json({
+      properties: mapProperties,
+      count: mapProperties.length,
+      totalMatchingProperties,
+      limit: MAP_PROPERTIES_LIMIT,
+      hasMoreProperties: totalMatchingProperties > MAP_PROPERTIES_LIMIT
+    });
+  } catch (err: any) {
+    console.error("Error in get-all-map-properties:", err);
+    res.status(500).json({
+      message: "An error occurred while fetching map properties.",
+      error: err.message,
+    });
+  }
+});
+
 propertiesRouter.get(
   "/property-details/:propId",
   async (req: Request, res: Response) => {
