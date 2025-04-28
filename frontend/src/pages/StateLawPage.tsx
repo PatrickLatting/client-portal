@@ -51,8 +51,8 @@ const Demo = () => {
                 <li>Right of Redemption Post-Auction: No</li>
                 <li>Payment at Auction: Full apyment due at auction.</li>
                 <li>
-                  Date of Sale: The first Tuesday of the month between 10:00am
-                  and 04:pm at the county courthouse.
+                  Date of Sale: The first Tuesday of the month between 10:00 am
+                  and 4:00 pm at the county courthouse.
                 </li>
               </ul>
             </div>

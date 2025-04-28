@@ -13,6 +13,8 @@ import PropertyImageCarousel from "../components/ImgCarousel";
 import PropertyActions from "../components/propertyDetails/PropertyActions";
 import ComparableMap from "../components/propertyListing/ComparableMap";
 import { Button } from "../components/ui/button";
+import { useMemo } from "react";
+
 // import PropertyImageCarousel, { ImgCarousel } from "../components/ImgCarousel";
 
 const PropertyDetailsPage = () => {
@@ -51,13 +53,89 @@ const PropertyDetailsPage = () => {
   };
 
   useEffect(() => {
-    if (!loggedIn) {
-      navigate("/login");
-    } else {
-      fetchProperty();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    fetchProperty();
   }, []);
+
+  // near the top of your component, alongside your other hooks:
+
+
+// HOOKS NEEDED TO SHOW FIRST THREE ROWS OF DATA IN COMPS TABLE + BLUR THE REST//
+
+  // === build a single array of all comparables once ===
+  const allComps = useMemo(() => {
+    if (!property) return [];
+    const comps: Array<{
+      key: string;
+      address: string;
+      dateSold?: string | Date;
+      price?: number | string;
+      bedrooms?: number | string;
+      bathrooms?: number | string;
+      sqft?: number | string;
+      lotSize?: number | string;
+      distance?: number;
+      compScore?: number | string;
+      compScoreNumeric?: number | null;
+      compUrl?: string;
+      lat?: number;
+      lng?: number;
+    }> = [];
+    for (let i = 0; i < 25; i++) {
+      const index = i + 1;
+      for (const { prefix, scoreKey } of [
+        { prefix: "SALE_COMP", scoreKey: `COMP_SCORE_SALE_COMP_${index}` },
+        { prefix: "REDFIN",     scoreKey: `COMP_SCORE_REDFIN_${index}`     },
+      ] as const) {
+        const address = (property as any)[`${prefix}_ADDRESS_${index}`];
+        if (!address) continue;
+        const lat       = (property as any)[`${prefix}_LATITUDE_${index}`];
+        const lng       = (property as any)[`${prefix}_LONGITUDE_${index}`];
+        const dateSold  = (property as any)[`${prefix}_DATESOLD_${index}`];
+        const formattedDateSold = typeof dateSold === "number" ? new Date(dateSold) : dateSold;
+        const price     = (property as any)[`${prefix}_PRICE_${index}`];
+        const bedrooms  = (property as any)[`${prefix}_BEDROOMS_${index}`];
+        const bathrooms = (property as any)[`${prefix}_BATHROOMS_${index}`];
+        const sqft      = (property as any)[`${prefix}_LIVINGAREA_${index}`];
+        const lotSize   = (property as any)[`${prefix}_LOTSIZE_${index}`];
+        const distance  = (property as any)[`${prefix}_DISTANCE_FROM_PROPERTY_${index}`];
+        const compScore = (property as any)[scoreKey];
+        const rawUrl    = (property as any)[`${prefix}_URL_${index}`] as string | undefined;
+        const compUrl   = prefix === "REDFIN" && rawUrl
+          ? `https://www.redfin.com${rawUrl}`
+          : rawUrl;
+
+        comps.push({
+          key: `${prefix}_${index}`,
+          address,
+          lat: lat ? Number(lat) : undefined,
+          dateSold: formattedDateSold,
+          price,
+          bedrooms,
+          bathrooms,
+          sqft,
+          lotSize,
+          distance: distance ? Number(distance) : undefined,
+          compScore,
+          compScoreNumeric: typeof compScore === "number" ? compScore : null,
+          compUrl,
+        });
+      }
+    }
+    // sort by score, then distance
+    comps.sort((a, b) => {
+      if (a.compScoreNumeric != null && b.compScoreNumeric != null)
+        return b.compScoreNumeric - a.compScoreNumeric;
+      if (a.compScoreNumeric != null) return -1;
+      if (b.compScoreNumeric != null) return 1;
+      return (a.distance ?? Infinity) - (b.distance ?? Infinity);
+    });
+    return comps;
+  }, [property]);
+
+  // only first three for people who aren’t logged in
+  const mapComps = loggedIn ? allComps : allComps.slice(0, 3);
+
+//END OF THE BLOCK FOR THE THREE ROWS FUNCTIONALITY
 
   const saveProperty = async () => {
     setSaveLoading(true);
@@ -321,11 +399,13 @@ const PropertyDetailsPage = () => {
         String(value) === "Not Available"
     );
   };
+
+
   const toggleMapView = () => {
     setShowMap(!showMap);
   };
   return (
-    <div className="container mx-auto px-4 py-6 max-w-7xl">
+    <><div className="container mx-auto px-4 py-6 max-w-7xl">
       {/* Header Section */}
       <div className="space-y-6 mb-20">
         <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold text-center">
@@ -338,8 +418,7 @@ const PropertyDetailsPage = () => {
           <PropertyActions
             property={property}
             isThisPropertySaved={isThisPropertySaved}
-            setIsThisPropertySaved={setIsThisPropertySaved}
-          />
+            setIsThisPropertySaved={setIsThisPropertySaved} />
 
           <section>
             <h2 className="text-xl md:text-2xl font-semibold mb-4">
@@ -458,9 +537,8 @@ const PropertyDetailsPage = () => {
                   alt: `Satellite view of ${property?.Address}`,
                 },
               ].filter(
-                (image): image is { url: string; alt: string } => !!image.url
-              )}
-            />
+                (image): image is { url: string; alt: string; } => !!image.url
+              )} />
           </div>
         </div>
       </div>
@@ -494,9 +572,7 @@ const PropertyDetailsPage = () => {
               return (
                 <div
                   key={index}
-                  className={`p-4 ${
-                    !isLastColumn ? "border-r border-gray-300" : ""
-                  }`}
+                  className={`p-4 ${!isLastColumn ? "border-r border-gray-300" : ""}`}
                 >
                   <div className="font-medium text-blue-900">{item.label}</div>
                   <div className="text-gray-700">{item.value || "-"}</div>
@@ -538,22 +614,10 @@ const PropertyDetailsPage = () => {
                   </thead>
                   <tbody>
                     {[1, 2, 3, 4, 5].map((i) => {
-                      const date =
-                        property[
-                          `PRICE_HISTORY_DATE_${i}` as keyof PropertyDetails
-                        ];
-                      const event =
-                        property[
-                          `PRICE_HISTORY_EVENT_${i}` as keyof PropertyDetails
-                        ];
-                      const price =
-                        property[
-                          `PRICE_HISTORY_PRICE_${i}` as keyof PropertyDetails
-                        ];
-                      const pricePerSqFt =
-                        property[
-                          `PRICE_HISTORY_PRICEPERSQUAREFOOT_${i}` as keyof PropertyDetails
-                        ];
+                      const date = property[`PRICE_HISTORY_DATE_${i}` as keyof PropertyDetails];
+                      const event = property[`PRICE_HISTORY_EVENT_${i}` as keyof PropertyDetails];
+                      const price = property[`PRICE_HISTORY_PRICE_${i}` as keyof PropertyDetails];
+                      const pricePerSqFt = property[`PRICE_HISTORY_PRICEPERSQUAREFOOT_${i}` as keyof PropertyDetails];
 
                       if (!date && !event && !price && !pricePerSqFt)
                         return null;
@@ -592,8 +656,7 @@ const PropertyDetailsPage = () => {
             <MapComponent
               latitude={property.Latitude}
               longitude={property.Longitude}
-              zoom={12}
-            />
+              zoom={12} />
           </div>
         ) : (
           <div className="flex justify-center items-center h-96 bg-white rounded-lg shadow-lg">
@@ -620,10 +683,10 @@ const PropertyDetailsPage = () => {
               </td>
               <td className="px-4 py-2">
                 {property?.["Sale Comp Valuation by sq ft (median)"] !==
-                undefined
+                  undefined
                   ? `$${Number(
-                      property["Sale Comp Valuation by sq ft (median)"]
-                    ).toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+                    property["Sale Comp Valuation by sq ft (median)"]
+                  ).toLocaleString(undefined, { maximumFractionDigits: 0 })}`
                   : "N/A"}
               </td>
             </tr>
@@ -632,8 +695,8 @@ const PropertyDetailsPage = () => {
               <td className="px-4 py-2">
                 {property?.["Sale Comp Valuation by sq ft (mean)"] !== undefined
                   ? `$${Number(
-                      property["Sale Comp Valuation by sq ft (mean)"]
-                    ).toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+                    property["Sale Comp Valuation by sq ft (mean)"]
+                  ).toLocaleString(undefined, { maximumFractionDigits: 0 })}`
                   : "N/A"}
               </td>
             </tr>
@@ -642,8 +705,8 @@ const PropertyDetailsPage = () => {
               <td className="px-4 py-2">
                 {property?.["Sale Comp Valuation by bed (median)"] !== undefined
                   ? `$${Number(
-                      property["Sale Comp Valuation by bed (median)"]
-                    ).toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+                    property["Sale Comp Valuation by bed (median)"]
+                  ).toLocaleString(undefined, { maximumFractionDigits: 0 })}`
                   : "N/A"}
               </td>
             </tr>
@@ -652,8 +715,8 @@ const PropertyDetailsPage = () => {
               <td className="px-4 py-2">
                 {property?.["Sale Comp Valuation by bed (mean)"] !== undefined
                   ? `$${Number(
-                      property["Sale Comp Valuation by bed (mean)"]
-                    ).toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+                    property["Sale Comp Valuation by bed (mean)"]
+                  ).toLocaleString(undefined, { maximumFractionDigits: 0 })}`
                   : "N/A"}
               </td>
             </tr>
@@ -677,8 +740,8 @@ const PropertyDetailsPage = () => {
               <td className="px-4 py-2">
                 {property?.["Zillow low estimate"] !== undefined
                   ? `$${Number(
-                      property["Zillow low estimate"]
-                    ).toLocaleString()}`
+                    property["Zillow low estimate"]
+                  ).toLocaleString()}`
                   : "N/A"}
               </td>
             </tr>
@@ -687,8 +750,8 @@ const PropertyDetailsPage = () => {
               <td className="px-4 py-2">
                 {property?.["Zillow high estimate"] !== undefined
                   ? `$${Number(
-                      property["Zillow high estimate"]
-                    ).toLocaleString()}`
+                    property["Zillow high estimate"]
+                  ).toLocaleString()}`
                   : "N/A"}
               </td>
             </tr>
@@ -696,285 +759,132 @@ const PropertyDetailsPage = () => {
         </table>
       </section>
 
-      <section className="mb-16 flex flex-col gap-5">
-       
-        <div className="border p-6">
-          <h2 className="text-xl md:text-2xl font-semibold mb-4">
-            Comparable Sales
-          </h2>
-
-          <div className="flex items-center space-x-2  my-3 flex-1">
-            <Button
-              onClick={toggleMapView}
-              className="h-12  w-full text-white py-3 px-4 rounded-md hover:bg-gray-800 transition-colors duration-200"
-            >
-              <MapIcon size={18} />
-              <span>Explore Properties Comparable Sales on Map</span>
-            </Button>
-          </div>
-          {showMap && (
-            <>
-              {property ? (
-                <Suspense
-                  fallback={
-                    <div className="flex justify-center items-center h-96 bg-white rounded-lg shadow-lg">
-                      <Loader2 className="animate-spin w-8 h-8 mr-2" />
-                      <span>Loading map...</span>
-                    </div>
-                  }
-                >
-                  <ComparableMap
-                  onClose={toggleMapView} 
-                    property={property}
-                    comparableProperties={(() => {
-                      const comps = [];
-
-                      // Extract comparable properties from the property data
-                      for (let i = 0; i < 25; i++) {
-                        const index = i + 1;
-                        const sources = [
-                          { prefix: "SALE_COMP", label: "SALE" },
-                          { prefix: "REDFIN", label: "REDFIN" },
-                        ];
-
-                        for (const { prefix, label } of sources) {
-                          const address = (property as any)[
-                            `${prefix}_ADDRESS_${index}`
-                          ];
-                          const lat = (property as any)[
-                            `${prefix}_LATITUDE_${index}`
-                          ];
-                          const lng = (property as any)[
-                            `${prefix}_LONGITUDE_${index}`
-                          ];
-                          const dateSold = (property as any)[
-                            `${prefix}_DATESOLD_${index}`
-                          ];
-                          const price = (property as any)[
-                            `${prefix}_PRICE_${index}`
-                          ];
-                          const bedrooms = (property as any)[
-                            `${prefix}_BEDROOMS_${index}`
-                          ];
-                          const bathrooms = (property as any)[
-                            `${prefix}_BATHROOMS_${index}`
-                          ];
-                          const sqft = (property as any)[
-                            `${prefix}_LIVINGAREA_${index}`
-                          ];
-                          const lotSize = (property as any)[
-                            `${prefix}_LOTSIZE_${index}`
-                          ];
-                          const distance = (property as any)[
-                            `${prefix}_DISTANCE_FROM_PROPERTY_${index}`
-                          ];
-                          const compScore = (property as any)[
-                            `COMP_SCORE_${prefix}_${index}`
-                          ];
-                          const rawUrl = (property as any)[
-                            `${prefix}_URL_${index}`
-                          ] as string | undefined;
-                          const compUrl =
-                            prefix === "REDFIN" && rawUrl
-                              ? `https://www.redfin.com${rawUrl}`
-                              : rawUrl;
-
-                          // Skip if no address or coordinates
-                          if (!address || (!lat && !lng)) continue;
-
-                          comps.push({
-                            address,
-                            lat: lat ? Number(lat) : undefined,
-                            lng: lng ? Number(lng) : undefined,
-                            dateSold,
-                            price,
-                            bedrooms,
-                            bathrooms,
-                            sqft,
-                            lotSize,
-                            distance: distance ? Number(distance) : undefined,
-                            compScore,
-                            compUrl,
-                          });
-                        }
-                      }
-
-                      return comps;
-                    })()}
-                  />
-                </Suspense>
-              ) : (
-                <div className="flex justify-center items-center h-96 bg-white rounded-lg shadow-lg">
-                  <Loader2 className="animate-spin w-8 h-8" />
-                </div>
-              )}
-            </>
-          )}
-
-          <table className="w-full text-left border-collapse text-sm">
-            <thead className="border-b border-gray-300">
-              <tr>
-                <th className="px-4 py-2 text-gray-700">Address</th>
-                <th className="px-4 py-2 text-gray-700">Date Sold</th>
-                <th className="px-4 py-2 text-gray-700">Price</th>
-                <th className="px-4 py-2 text-gray-700">Sqft</th>
-                <th className="px-4 py-2 text-gray-700">Bedrooms</th>
-                <th className="px-4 py-2 text-gray-700">Bathrooms</th>
-                <th className="px-4 py-2 text-gray-700">Lot Size</th>
-                <th className="px-4 py-2 text-gray-700">Distance</th>
-                <th className="px-4 py-2 text-gray-700">Comp Quality</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(() => {
-                const comps = [];
-
-                for (let i = 0; i < 25; i++) {
-                  const index = i + 1;
-                  const sources = [
-                    {
-                      prefix: "SALE_COMP",
-                      label: "SALE",
-                      scoreKey: `COMP_SCORE_SALE_COMP_${index}`,
-                    },
-                    {
-                      prefix: "REDFIN",
-                      label: "REDFIN",
-                      scoreKey: `COMP_SCORE_REDFIN_${index}`,
-                    },
-                  ];
-
-                  for (const { prefix, label, scoreKey } of sources) {
-                    const address = (property as any)[
-                      `${prefix}_ADDRESS_${index}`
-                    ];
-                    const dateSold = (property as any)[
-                      `${prefix}_DATESOLD_${index}`
-                    ];
-                    const price = (property as any)[`${prefix}_PRICE_${index}`];
-                    const bedrooms = (property as any)[
-                      `${prefix}_BEDROOMS_${index}`
-                    ];
-                    const bathrooms = (property as any)[
-                      `${prefix}_BATHROOMS_${index}`
-                    ];
-                    const sqft = (property as any)[
-                      `${prefix}_LIVINGAREA_${index}`
-                    ];
-                    const lotSize = (property as any)[
-                      `${prefix}_LOTSIZE_${index}`
-                    ];
-                    const distance = (property as any)[
-                      `${prefix}_DISTANCE_FROM_PROPERTY_${index}`
-                    ];
-                    const compScore = (property as any)[scoreKey];
-                    const rawUrl = (property as any)[
-                      `${prefix}_URL_${index}`
-                    ] as string | undefined;
-                    const compUrl =
-                      prefix === "REDFIN" && rawUrl
-                        ? `https://www.redfin.com${rawUrl}`
-                        : rawUrl;
-
-                    if (!address && !price && !bedrooms && !bathrooms && !sqft)
-                      continue;
-
-                    comps.push({
-                      key: `${label}_${index}`,
-                      address,
-                      dateSold,
-                      price,
-                      bedrooms,
-                      bathrooms,
-                      sqft,
-                      lotSize,
-                      distance: distance ? Number(distance) : Infinity,
-                      compScore,
-                      compScoreNumeric:
-                        typeof compScore === "number" ? compScore : null,
-                      compUrl,
-                    });
-                  }
-                }
-
-                comps.sort((a, b) => {
-                  if (
-                    a.compScoreNumeric !== null &&
-                    b.compScoreNumeric !== null
-                  ) {
-                    return b.compScoreNumeric - a.compScoreNumeric;
-                  }
-                  if (a.compScoreNumeric !== null) return -1;
-                  if (b.compScoreNumeric !== null) return 1;
-                  return a.distance - b.distance;
-                });
-
-                return comps.map((row) => (
-                  <tr key={row.key} className="border-b border-gray-200">
-                    <td className="px-4 py-2">
-                      <a
-                        href={row.compUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-500 underline"
-                      >
-                        {String(row.address) || " - "}
-                      </a>
-                    </td>
-                    <td className="px-4 py-2">
-                      {typeof row.dateSold === "string" ||
-                      typeof row.dateSold === "number"
-                        ? new Date(row.dateSold).toLocaleDateString("en-US")
-                        : "N/A"}
-                    </td>
-                    <td className="px-4 py-2">
-                      {row.price
-                        ? `$${Number(row.price).toLocaleString()}`
-                        : " - "}
-                    </td>
-                    <td className="px-4 py-2">{row.sqft || " - "}</td>
-                    <td className="px-4 py-2">
-                      {String(row.bedrooms) || " - "}
-                    </td>
-                    <td className="px-4 py-2">
-                      {String(row.bathrooms) || " - "}
-                    </td>
-                    <td className="px-4 py-2">
-                      {row.lotSize
-                        ? `${(Number(row.lotSize) / 43560).toFixed(2)}`
-                        : " - "}
-                    </td>
-                    <td className="px-4 py-2">
-                      {row.distance !== Infinity
-                        ? row.distance.toFixed(2)
-                        : " - "}
-                    </td>
-                    <td className="px-4 py-2">
-                      {row.compScore !== undefined ? (
-                        typeof row.compScore === "number" ? (
-                          row.compScore.toFixed(2)
-                        ) : (
-                          <ul className="list-disc list-inside text-gray-700">
-                            {String(row.compScore)
-                              .split(",")
-                              .map((reason, i) => (
-                                <li key={i}>{reason.split(":")[0].trim()}</li>
-                              ))}
-                          </ul>
-                        )
-                      ) : (
-                        " - "
-                      )}
-                    </td>
-                  </tr>
-                ));
-              })()}
-            </tbody>
-          </table>
-        </div>
-      </section>
     </div>
-  );
-};
+    <div>
+    <section className="mb-16 flex flex-col gap-5">
+    <div className="border p-6 bg-white rounded-lg shadow-lg w-full max-w-screen-xl mx-auto" style={{ width: '1500px' }}>
+    <h2 className="text-xl md:text-2xl font-semibold mb-4">
+      Comparable Sales
+    </h2>
 
+    {/* Map toggle button */}
+    <div className="flex items-center space-x-2 mb-4">
+      <Button
+        onClick={toggleMapView}
+        className="h-12 w-full text-white py-3 px-4 rounded-md hover:bg-gray-800 transition-colors duration-200"
+      >
+        <MapIcon size={18} />
+        <span>Explore Comparable Sales on Map</span>
+      </Button>
+    </div>
+    
+    {/* Map modal/viewer */}
+    {showMap && (
+  <Suspense
+    fallback={
+      <div className="flex justify-center items-center h-96 bg-white rounded-lg shadow-lg">
+        <Loader2 className="animate-spin w-8 h-8 mr-2" />
+        <span>Loading map...</span>
+      </div>
+    }
+  >
+    <ComparableMap
+      onClose={toggleMapView}
+      property={property!}
+      comparableProperties={mapComps}
+    />
+  </Suspense>
+)}
+
+
+    {/* Table wrapper for horizontal scroll */}
+    <div className="overflow-x-auto w-full max-w-screen-xl mx-auto">
+      <table className="min-w-full table-auto text-left text-sm divide-y divide-gray-200">
+        <thead className="bg-gray-50">
+          <tr>
+            <th className="px-4 py-2">Address</th>
+            <th className="px-4 py-2">Date Sold</th>
+            <th className="px-4 py-2">Price</th>
+            <th className="px-4 py-2">Sqft</th>
+            <th className="px-4 py-2">Bedrooms</th>
+            <th className="px-4 py-2">Bathrooms</th>
+            <th className="px-4 py-2">Lot Size</th>
+            <th className="px-4 py-2">Distance</th>
+            <th className="px-4 py-2">Comp Quality</th>
+          </tr>
+        </thead>
+        <tbody className="bg-white divide-y divide-gray-200">
+          {allComps.map((row, idx) => (
+            <tr
+              key={row.key}
+              className={!loggedIn && idx >= 3 ? "blur-sm pointer-events-none" : ""}
+            >
+              <td className="px-4 py-2">
+                {row.compUrl ? (
+                  <a
+                    href={row.compUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-500 underline"
+                  >
+                    {row.address}
+                  </a>
+                ) : (
+                  row.address
+                )}
+              </td>
+              <td className="px-4 py-2">
+                {row.dateSold
+                  ? new Date(row.dateSold).toLocaleDateString("en-US")
+                  : "N/A"}
+              </td>
+              <td className="px-4 py-2">
+                {row.price ? `$${Number(row.price).toLocaleString()}` : "-"}
+              </td>
+              <td className="px-4 py-2">{row.sqft ?? "-"}</td>
+              <td className="px-4 py-2">{row.bedrooms ?? "-"}</td>
+              <td className="px-4 py-2">{row.bathrooms ?? "-"}</td>
+              <td className="px-4 py-2">
+                {row.lotSize
+                  ? `${(Number(row.lotSize) / 43560).toFixed(2)}`
+                  : "-"}
+              </td>
+              <td className="px-4 py-2">
+                {row.distance != null ? row.distance.toFixed(2) : "-"}
+              </td>
+              <td className="px-4 py-2 align-top">
+              {typeof row.compScore === "number" ? (
+                row.compScore.toFixed(2)
+              ) : row.compScore ? (
+                <ul className="list-disc list-inside text-gray-700 text-xs">
+                  {String(row.compScore)
+                    .replace(/00:00:00/g, "")
+                    .split(",")
+                    .map((reason, i) => (
+                      <li key={i}>{reason.trim()}</li>
+                    ))}
+                </ul>
+              ) : (
+                "-"
+              )}
+            </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+
+    {/* call-out for non-logged-in users */}
+    {!loggedIn && (
+      <div className="mt-3 text-center text-black font-bold text-4xl">
+      Log in to see the full list of comparable sales
+      </div>
+    )}
+  </div>
+</section>
+
+</div>
+</>
+);
+};
 export default PropertyDetailsPage;

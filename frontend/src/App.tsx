@@ -38,11 +38,8 @@ function App() {
         <Toaster />
         <HashRouter>  {/* Changed from BrowserRouter and removed basename */}
           <Routes>
-            <Route path="/" element={<AppTemplate />}>
-              <Route
-                index
-                element={loggedIn ? <PropertyListingPage /> : <HomePage />}
-              />
+          <Route path="/" element={<AppTemplate />}>
+            <Route index element={<PropertyListingPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/sign-up" element={<SignupPage />} />
               <Route path="/about" element={<AboutPage />} />

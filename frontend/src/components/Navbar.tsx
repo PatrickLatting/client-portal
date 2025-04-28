@@ -130,13 +130,13 @@ export default function Component() {
                   >
                     Order History
                   </Link> */}
-                  {/* <Link
+                   <Link
                     onClick={() => setIsSheetOpen(false)}
                     to="/state-laws"
                     className="flex w-full items-center py-2 text-lg font-semibold"
                   >
                     State Law
-                  </Link> */}
+                  </Link> 
                   <LogoutButton />
                 </>
               ) : (
@@ -145,7 +145,7 @@ export default function Component() {
                   className="flex w-full items-center py-2 text-lg font-semibold"
                   onClick={() => setIsSheetOpen(false)} // Close the sheet on click
                 >
-                  Client Login
+                  Log In
                 </Link>
               )}
               {!loggedIn && (
@@ -154,7 +154,7 @@ export default function Component() {
                   className="flex w-full items-center py-2 text-lg font-semibold"
                   onClick={() => setIsSheetOpen(false)} // Close the sheet on click
                 >
-                  Request Access
+                  Sign Up
                 </Link>
               )}
             </div>
@@ -194,13 +194,13 @@ export default function Component() {
               className="group inline-flex h-9 w-max items-center justify-center"
             >
               Order History
-            </Link>
-            {/* <Link
+            </Link> */}
+            <Link
               to="/state-laws"
               className="group inline-flex h-9 w-max items-center justify-center"
             >
               State Law
-            </Link> */}
+            </Link> 
             <DropdownMenu>
               <DropdownMenuTrigger>
                 <Avatar>
@@ -211,7 +211,7 @@ export default function Component() {
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => setIsAlertOpen(true)}>
-                  Logout
+                  Log Out
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -221,7 +221,7 @@ export default function Component() {
             to="/login"
             className="group inline-flex h-9 w-max items-center justify-center"
           >
-            Client Login
+            Log In
           </Link>
         )}
         {!loggedIn && (
@@ -229,7 +229,7 @@ export default function Component() {
             to="/sign-up"
             className="group inline-flex h-9 w-max items-center justify-center"
           >
-            Request Access
+            Sign Up
           </Link>
         )}
       </nav>
