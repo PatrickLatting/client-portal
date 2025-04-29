@@ -58,6 +58,7 @@ interface CompProperty {
   distance?: number;
   compScore?: number | string;
   compUrl?: string;
+  zillowLink?: string; // Added property
 }
 
 interface FitBoundsProps {
@@ -321,6 +322,19 @@ const ComparableMap: React.FC<ComparableMapProps> = ({
                         View Details
                       </Button>
                     )}
+                    {(() => {
+                    const detailsUrl = comp.zillowLink ?? comp.compUrl;
+                    return detailsUrl ? (
+                      <Button
+                        size="sm"
+                        className="mt-2 w-full"
+                        onClick={() => window.open(detailsUrl, "_blank")}
+                      >
+                        View Details
+                      </Button>
+                    ) : null;
+                  })()}
+
                   </div>
                 </Popup>
               </Marker>

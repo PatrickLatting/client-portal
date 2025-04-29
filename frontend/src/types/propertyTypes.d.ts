@@ -50,6 +50,7 @@ export type PropertyDetails = {
   "Description": string;
   "Latitude": number;
   "Zestimate High Percent": number;
+  "matched_Foreclosure Status": string;
 
   //Tax
   TAX_HISTORY_TIME_1: number;
@@ -172,6 +173,7 @@ export type PropertyDetails = {
   SALE_COMP_LOTSIZE_1: number;
   SALE_COMP_LATITUDE_1: number;
   SALE_COMP_LONGITUDE_1: number;
+  SALE_COMP_ZILLOW_LINK_1: string;
   SALE_COMP_HDPURL_1: string;
   SALE_COMP_ZPID_1: number;
   SALE_COMP_HOMETYPE_1: string;
@@ -186,6 +188,7 @@ export type PropertyDetails = {
   SALE_COMP_LOTSIZE_2: number;
   SALE_COMP_LATITUDE_2: number;
   SALE_COMP_LONGITUDE_2: number;
+  SALE_COMP_ZILLOW_LINK_2: string;
   SALE_COMP_HDPURL_2: string;
   SALE_COMP_ZPID_2: number;
   SALE_COMP_HOMETYPE_2: string;
@@ -200,6 +203,7 @@ export type PropertyDetails = {
   SALE_COMP_LOTSIZE_3: number;
   SALE_COMP_LATITUDE_3: number;
   SALE_COMP_LONGITUDE_3: number;
+  SALE_COMP_ZILLOW_LINK_3: string;
   SALE_COMP_HDPURL_3: string;
   SALE_COMP_ZPID_3: number;
   SALE_COMP_HOMETYPE_3: string;
@@ -214,6 +218,7 @@ export type PropertyDetails = {
   SALE_COMP_LOTSIZE_4: number;
   SALE_COMP_LATITUDE_4: number;
   SALE_COMP_LONGITUDE_4: number;
+  SALE_COMP_ZILLOW_LINK_4: string;
   SALE_COMP_HDPURL_4: string;
   SALE_COMP_ZPID_4: number;
   SALE_COMP_HOMETYPE_4: string;
@@ -228,6 +233,7 @@ export type PropertyDetails = {
   SALE_COMP_LOTSIZE_5: number;
   SALE_COMP_LATITUDE_5: number;
   SALE_COMP_LONGITUDE_5: number;
+  SALE_COMP_ZILLOW_LINK_5: string;
   SALE_COMP_HDPURL_5: string;
   SALE_COMP_ZPID_5: number;
   SALE_COMP_HOMETYPE_5: string;
@@ -242,6 +248,7 @@ export type PropertyDetails = {
   SALE_COMP_LOTSIZE_6: number;
   SALE_COMP_LATITUDE_6: number;
   SALE_COMP_LONGITUDE_6: number;
+  SALE_COMP_ZILLOW_LINK_6: string;
   SALE_COMP_HDPURL_6: string;
   SALE_COMP_ZPID_6: number;
   SALE_COMP_HOMETYPE_6: string;
@@ -256,6 +263,7 @@ export type PropertyDetails = {
   SALE_COMP_LOTSIZE_7: number;
   SALE_COMP_LATITUDE_7: number;
   SALE_COMP_LONGITUDE_7: number;
+  SALE_COMP_ZILLOW_LINK_7: string;
   SALE_COMP_HDPURL_7: string;
   SALE_COMP_ZPID_7: number;
   SALE_COMP_HOMETYPE_7: string;
@@ -270,6 +278,7 @@ export type PropertyDetails = {
   SALE_COMP_LOTSIZE_8: number;
   SALE_COMP_LATITUDE_8: number;
   SALE_COMP_LONGITUDE_8: number;
+  SALE_COMP_ZILLOW_LINK_8: string;
   SALE_COMP_HDPURL_8: string;
   SALE_COMP_ZPID_8: number;
   SALE_COMP_HOMETYPE_8: string;
@@ -284,6 +293,7 @@ export type PropertyDetails = {
   SALE_COMP_LOTSIZE_9: number;
   SALE_COMP_LATITUDE_9: number;
   SALE_COMP_LONGITUDE_9: number;
+  SALE_COMP_ZILLOW_LINK_9: string;
   SALE_COMP_HDPURL_9: string;
   SALE_COMP_ZPID_9: number;
   SALE_COMP_HOMETYPE_9: string;
@@ -298,6 +308,7 @@ export type PropertyDetails = {
   SALE_COMP_LOTSIZE_10: number;
   SALE_COMP_LATITUDE_10: number;
   SALE_COMP_LONGITUDE_10: number;
+  SALE_COMP_ZILLOW_LINK_10: string;
   SALE_COMP_HDPURL_10: string;
   SALE_COMP_ZPID_10: number;
   SALE_COMP_HOMETYPE_10: string;
@@ -312,6 +323,7 @@ export type PropertyDetails = {
   SALE_COMP_LOTSIZE_11: number;
   SALE_COMP_LATITUDE_11: number;
   SALE_COMP_LONGITUDE_11: number;
+  SALE_COMP_ZILLOW_LINK_11: string;
   SALE_COMP_HDPURL_11: string;
   SALE_COMP_ZPID_11: number;
   SALE_COMP_HOMETYPE_11: string;
@@ -326,6 +338,7 @@ export type PropertyDetails = {
   SALE_COMP_LOTSIZE_12: number;
   SALE_COMP_LATITUDE_12: number;
   SALE_COMP_LONGITUDE_12: number;
+  SALE_COMP_ZILLOW_LINK_12: string;
   SALE_COMP_HDPURL_12: string;
   SALE_COMP_ZPID_12: number;
   SALE_COMP_HOMETYPE_12: string;
@@ -340,6 +353,7 @@ export type PropertyDetails = {
   SALE_COMP_LOTSIZE_13: number;
   SALE_COMP_LATITUDE_13: number;
   SALE_COMP_LONGITUDE_13: number;
+  SALE_COMP_ZILLOW_LINK_13: string;
   SALE_COMP_HDPURL_13: string;
   SALE_COMP_ZPID_13: number;
   SALE_COMP_HOMETYPE_13: string;
@@ -354,6 +368,7 @@ export type PropertyDetails = {
   SALE_COMP_LOTSIZE_14: number;
   SALE_COMP_LATITUDE_14: number;
   SALE_COMP_LONGITUDE_14: number;
+  SALE_COMP_ZILLOW_LINK_14: string;
   SALE_COMP_HDPURL_14: string;
   SALE_COMP_ZPID_14: number;
   SALE_COMP_HOMETYPE_14: string;
@@ -368,6 +383,7 @@ export type PropertyDetails = {
   SALE_COMP_LOTSIZE_15: number;
   SALE_COMP_LATITUDE_15: number;
   SALE_COMP_LONGITUDE_15: number;
+  SALE_COMP_ZILLOW_LINK_15: string;
   SALE_COMP_HDPURL_15: string;
   SALE_COMP_ZPID_15: number;
   SALE_COMP_HOMETYPE_15: string;
@@ -382,6 +398,7 @@ export type PropertyDetails = {
   SALE_COMP_LOTSIZE_16: number;
   SALE_COMP_LATITUDE_16: number;
   SALE_COMP_LONGITUDE_16: number;
+  SALE_COMP_ZILLOW_LINK_16: string;
   SALE_COMP_HDPURL_16: string;
   SALE_COMP_ZPID_16: number;
   SALE_COMP_HOMETYPE_16: string;
@@ -396,6 +413,7 @@ export type PropertyDetails = {
   SALE_COMP_LOTSIZE_17: number;
   SALE_COMP_LATITUDE_17: number;
   SALE_COMP_LONGITUDE_17: number;
+  SALE_COMP_ZILLOW_LINK_17: string;
   SALE_COMP_HDPURL_17: string;
   SALE_COMP_ZPID_17: number;
   SALE_COMP_HOMETYPE_17: string;
@@ -410,6 +428,7 @@ export type PropertyDetails = {
   SALE_COMP_LOTSIZE_18: number;
   SALE_COMP_LATITUDE_18: number;
   SALE_COMP_LONGITUDE_18: number;
+  SALE_COMP_ZILLOW_LINK_18: string;
   SALE_COMP_HDPURL_18: string;
   SALE_COMP_ZPID_18: number;
   SALE_COMP_HOMETYPE_18: string;
@@ -424,6 +443,7 @@ export type PropertyDetails = {
   SALE_COMP_LOTSIZE_19: number;
   SALE_COMP_LATITUDE_19: number;
   SALE_COMP_LONGITUDE_19: number;
+  SALE_COMP_ZILLOW_LINK_19: string;
   SALE_COMP_HDPURL_19: string;
   SALE_COMP_ZPID_19: number;
   SALE_COMP_HOMETYPE_19: string;
@@ -438,6 +458,7 @@ export type PropertyDetails = {
   SALE_COMP_LOTSIZE_20: number;
   SALE_COMP_LATITUDE_20: number;
   SALE_COMP_LONGITUDE_20: number;
+  SALE_COMP_ZILLOW_LINK_20: string;
   SALE_COMP_HDPURL_20: string;
   SALE_COMP_ZPID_20: number;
   SALE_COMP_HOMETYPE_20: string;
@@ -452,6 +473,7 @@ export type PropertyDetails = {
   SALE_COMP_LOTSIZE_21: number;
   SALE_COMP_LATITUDE_21: number;
   SALE_COMP_LONGITUDE_21: number;
+  SALE_COMP_ZILLOW_LINK_21: string;
   SALE_COMP_HDPURL_21: string;
   SALE_COMP_ZPID_21: number;
   SALE_COMP_HOMETYPE_21: string;
@@ -466,6 +488,7 @@ export type PropertyDetails = {
   SALE_COMP_LOTSIZE_22: number;
   SALE_COMP_LATITUDE_22: number;
   SALE_COMP_LONGITUDE_22: number;
+  SALE_COMP_ZILLOW_LINK_22: string;
   SALE_COMP_URL_22: string;
   SALE_COMP_ZPID_22: number;
   SALE_COMP_HOMETYPE_22: string;
@@ -480,6 +503,7 @@ export type PropertyDetails = {
   SALE_COMP_LOTSIZE_23: number;
   SALE_COMP_LATITUDE_23: number;
   SALE_COMP_LONGITUDE_23: number;
+  SALE_COMP_ZILLOW_LINK_23: string;
   SALE_COMP_HDPURL_23: string;
   SALE_COMP_ZPID_23: number;
   SALE_COMP_HOMETYPE_23: string;
@@ -494,6 +518,7 @@ export type PropertyDetails = {
   SALE_COMP_LOTSIZE_24: number;
   SALE_COMP_LATITUDE_24: number;
   SALE_COMP_LONGITUDE_24: number;
+  SALE_COMP_ZILLOW_LINK_24: string;
   SALE_COMP_HDPURL_24: string;
   SALE_COMP_ZPID_24: number;
   SALE_COMP_HOMETYPE_24: string;
@@ -508,6 +533,7 @@ export type PropertyDetails = {
   SALE_COMP_LOTSIZE_25: number;
   SALE_COMP_LATITUDE_25: number;
   SALE_COMP_LONGITUDE_25: number;
+  SALE_COMP_ZILLOW_LINK_25: string;
   SALE_COMP_HDPURL_25: string;
   SALE_COMP_ZPID_25: number;
   SALE_COMP_HOMETYPE_25: string;

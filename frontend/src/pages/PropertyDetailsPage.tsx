@@ -103,11 +103,14 @@ const PropertyDetailsPage = () => {
         const compUrl   = prefix === "REDFIN" && rawUrl
           ? `https://www.redfin.com${rawUrl}`
           : rawUrl;
+        const zillowLink = (property as any)[`${prefix}_ZILLOW_LINK_${index}`] as string | undefined;
+
 
         comps.push({
           key: `${prefix}_${index}`,
           address,
-          lat: lat ? Number(lat) : undefined,
+          lat:   lat ? Number(lat) : undefined,
+          lng:   lng ? Number(lng) : undefined, 
           dateSold: formattedDateSold,
           price,
           bedrooms,
@@ -118,6 +121,7 @@ const PropertyDetailsPage = () => {
           compScore,
           compScoreNumeric: typeof compScore === "number" ? compScore : null,
           compUrl,
+          
         });
       }
     }
