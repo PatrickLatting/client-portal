@@ -68,20 +68,26 @@ const PropertyListingTable: React.FC<DynamicGridProps> = ({
   };
 
   const valueFormatter = (params: ValueFormatterParams, columnName: string) => {
-    if (params.value === null || params.value === undefined) return '-';
+  if (params.value === null || params.value === undefined) return '-';
 
-    if (typeof params.value === 'number') {
-      if (
-        columnName.includes('VALUE') ||
-        columnName.includes('AMOUNT') ||
-        columnName.includes('Principal') ||
-        columnName.includes('EQUITY') ||
-        columnName.includes('MORTGAGE')
-      ) {
-        return formatCurrency(params.value);
-      }
-      return formatNumber(params.value);
+  if (typeof params.value === 'number') {
+    // Add special case for Year Built column
+    if (columnName === 'Year Built') {
+      return params.value.toString();
     }
+    
+    // Keep existing formatting for other numeric columns
+    if (
+      columnName.includes('VALUE') ||
+      columnName.includes('AMOUNT') ||
+      columnName.includes('Principal') ||
+      columnName.includes('EQUITY') ||
+      columnName.includes('MORTGAGE')
+    ) {
+      return formatCurrency(params.value);
+    }
+    return formatNumber(params.value);
+  }
 
     if (typeof params.value === 'boolean') {
       return params.value ? 'Yes' : 'No';
@@ -303,12 +309,10 @@ const PropertyListingTable: React.FC<DynamicGridProps> = ({
 
 
   const handleCellClicked = (event: CellClickedEvent) => {
-    if (!event.column.getColDef().checkboxSelection && event.data) {
-        if (event.data._id) {
-            navigate(`/property-details/${event.data._id}`);
-        } else {
-            console.warn("No valid _id found. Navigation not triggered.");
-        }
+    const isCheckboxClicked = event.event?.target instanceof HTMLElement && event.event.target.closest('.ag-selection-checkbox');
+
+    if (!isCheckboxClicked && event.data && event.data._id) {
+      navigate(`/property-details/${event.data._id}`);
     }
   };
 

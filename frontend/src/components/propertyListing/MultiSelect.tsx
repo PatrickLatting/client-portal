@@ -88,7 +88,6 @@ const MultiSelector: React.FC<MultiSelectorProps> = ({
                   ))
                 : placeholder}
             </div>
-            <ChevronDown className="ml-2 h-4 w-5 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
         <PopoverContent className={`${buttonWidth} p-0`}>
@@ -101,15 +100,16 @@ const MultiSelector: React.FC<MultiSelectorProps> = ({
                   <CommandItem
                     key={option.value}
                     value={option.value}
-                    onSelect={() => {
-                      handleSetValue(option.value);
-                    }}
+                    onClick={(e) => e.stopPropagation()} // Prevent closing
                   >
-                    <Check
-                      className={cn(
-                        "mr-2 h-4 w-4",
-                        value.includes(option.value) ? "opacity-100" : "opacity-0"
-                      )}
+                    <input
+                      type="checkbox"
+                      checked={value.includes(option.value)}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        handleSetValue(option.value);
+                      }}
+                      className="mr-2"
                     />
                     {option.label}
                   </CommandItem>
@@ -119,7 +119,7 @@ const MultiSelector: React.FC<MultiSelectorProps> = ({
           </Command>
         </PopoverContent>
       </Popover>
-      {/* {value.length > 0 && (
+      {value.length > 0 && (
         <Button
           variant="ghost"
           size="sm"
@@ -128,7 +128,7 @@ const MultiSelector: React.FC<MultiSelectorProps> = ({
         >
           Clear filters
         </Button>
-      )} */}
+      )}
     </div>
   );
 };

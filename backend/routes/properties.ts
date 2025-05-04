@@ -18,159 +18,38 @@ propertiesRouter.get("/get-properties", async (req: Request, res: Response) => {
     const propertyType = (req.query.propertyType as string) || "";
     const ownerType = (req.query.ownerType as string) || "";
     const state = (req.query.state as string) || "";
-    const ownerOccupancy = (req.query.ownerOccupancy as string) || "";
-
-    // Get sort parameters
-    const sortColumn = (req.query.sortColumn as string) || "";
-    const sortDirection = (req.query.sortDirection as string) || "";
-
-    // Get date parameters directly as strings
-    const fromDate = (req.query.fromDate as string) || undefined;
-    const toDate = (req.query.toDate as string) || undefined;
-
-    const yearBuiltFrom = parseInt(req.query.yearBuiltFrom as string, 10);
-    const yearBuiltTo = parseInt(req.query.yearBuiltTo as string, 10);
-    const estimatedFrom = parseFloat(req.query.estimatedFrom as string);
-    const estimatedTo = parseFloat(req.query.estimatedTo as string);
+    const selectedSaleDates = (req.query.saleDates as string) || "";
 
     const filter: any = {};
 
-    // Handle date range filter (SALE_DATE_1) - using string comparison
-    if (fromDate || toDate) {
-      filter.SALE_DATE_1 = {};
-      if (fromDate) {
-        filter.SALE_DATE_1.$gte = fromDate;
-      }
-      if (toDate) {
-        filter.SALE_DATE_1.$lte = toDate;
-      }
+    // Apply filters
+    if (selectedSaleDates) {
+      const saleDatesArray = selectedSaleDates.split(",").map((date) => date.trim());
+      filter["Foreclosure Sale Date"] = { $in: saleDatesArray };
     }
-
-    // Handle search query
-    if (search && search !== "") {
-      filter.$or = [
-        { Address: { $regex: search, $options: "i" } },
-        { County: { $regex: search, $options: "i" } },
-      ];
-    }
-
-    // Handle county query
-    if (county && county !== "") {
+    if (county) {
       const counties = county.split(",").map((item) => item.trim());
-      filter.County = {
-        $in: counties.map((county) => new RegExp(county, "i")),
-      };
+      filter.County = { $in: counties };
     }
-
-    // Handle property type query
-    if (propertyType && propertyType !== "") {
+    if (propertyType) {
       const propertyTypes = propertyType.split(",").map((item) => item.trim());
-      filter.LAND_USE = {
-        $in: propertyTypes.map((type) => new RegExp(type, "i")),
-      };
+      filter["Property Type"] = { $in: propertyTypes };
     }
-
-    // Handle owner type query
-    if (ownerType && ownerType !== "") {
-      const ownerTypes = ownerType.split(",").map((item) => item.trim());
-      filter.OWNERSHIP_TYPE = {
-        $in: ownerTypes.map((type) => new RegExp(type, "i")),
-      };
-    }
-
-    // Handle state query
-    if (state && state !== "") {
+    if (state) {
       const states = state.split(",").map((item) => item.trim());
-      filter.State = {
-        $in: states.map((stateItem) => new RegExp(stateItem, "i")),
-      };
+      filter.State = { $in: states };
     }
 
-    // Handle owner occupancy query
-    if (ownerOccupancy && ownerOccupancy !== "") {
-      const ownerOccupancies = ownerOccupancy
-        .split(",")
-        .map((item) => item.trim());
-      filter.OWNER_OCCUPANCY = {
-        $in: ownerOccupancies.map((occupancy) => new RegExp(occupancy, "i")),
-      };
-    }
-
-    // Handle year built filter
-    if (!isNaN(yearBuiltFrom) || !isNaN(yearBuiltTo)) {
-      filter.YEAR_BUILT = {};
-      if (!isNaN(yearBuiltFrom)) {
-        filter.YEAR_BUILT.$gte = yearBuiltFrom;
-      }
-      if (!isNaN(yearBuiltTo)) {
-        filter.YEAR_BUILT.$lte = yearBuiltTo;
-      }
-    }
-
-    // Handle estimated value filter
-    if (!isNaN(estimatedFrom) || !isNaN(estimatedTo)) {
-      filter.ESTIMATED_VALUE = {};
-      if (!isNaN(estimatedFrom)) {
-        filter.ESTIMATED_VALUE.$gte = estimatedFrom;
-      }
-      if (!isNaN(estimatedTo)) {
-        filter.ESTIMATED_VALUE.$lte = estimatedTo;
-      }
-    }
-
-    // Create sort object for MongoDB query
-    let sort: any = {};
-
-    // Map AG Grid column names to database field names if needed
-    // This maps the frontend column names to the database field names
-    const columnMapping: Record<string, string> = {
-      Address: "Address",
-      State: "State",
-      County: "County",
-      LAND_USE: "LAND_USE",
-      "Principal Amount Owed": "Principal Amount Owed",
-      ESTIMATED_VALUE: "ESTIMATED_VALUE",
-      "Foreclosure Sale Date": "SALE_DATE_1",
-      "Parcel Number": "Parcel Number",
-      YEAR_BUILT: "YEAR_BUILT",
-      BEDROOMS: "BEDROOMS",
-      BATHROOMS: "BATHROOMS",
-      STORIES: "STORIES",
-      SQUARE_FEET: "SQUARE_FEET",
-      HOA_PRESENT: "HOA_PRESENT",
-      LOT_ACRES: "LOT_ACRES",
-      // Add mappings for other columns as needed
-    };
-
-    if (sortColumn && sortDirection) {
-      // Get the database field name from the mapping
-      const dbFieldName = columnMapping[sortColumn] || sortColumn;
-      sort[dbFieldName] = sortDirection === "asc" ? 1 : -1;
-    } else {
-      // Default sort, e.g., by most recent
-      sort = { SALE_DATE_1: -1 };
-    }
-
-    // Execute queries with sort applied
-    const [
-      properties,
-      total,
-      allCounties,
-      allPropertyTypes,
-      allOwnerTypes,
-      allStates,
-      allOwnerOccupancy,
-    ] = await Promise.all([
-      Properties.find(filter).sort(sort).skip(skip).limit(limit),
+    // Fetch filtered properties and all possible filter options
+    const [properties, total, allSaleDates, allCounties, allPropertyTypes, allStates] = await Promise.all([
+      Properties.find(filter).skip(skip).limit(limit),
       Properties.countDocuments(filter),
-      Properties.distinct("County"),
-      Properties.distinct("LAND_USE"),
-      Properties.distinct("OWNERSHIP_TYPE"),
-      Properties.distinct("State"),
-      Properties.distinct("OWNER_OCCUPANCY"),
+      Properties.distinct("Foreclosure Sale Date"), // Fetch all sale dates
+      Properties.distinct("County"), // Fetch all counties
+      Properties.distinct("Property Type"), // Fetch all property types
+      Properties.distinct("State"), // Fetch all states
     ]);
 
-    // Return response
     res.json({
       data: properties,
       meta: {
@@ -178,11 +57,10 @@ propertiesRouter.get("/get-properties", async (req: Request, res: Response) => {
         totalPages: Math.ceil(total / limit),
         totalCount: total,
       },
+      allSaleDates,
       allCounties,
-      allOwnerTypes,
       allPropertyTypes,
       allStates,
-      allOwnerOccupancy,
     });
   } catch (err: any) {
     console.error("Error in get-properties:", err);
@@ -192,8 +70,6 @@ propertiesRouter.get("/get-properties", async (req: Request, res: Response) => {
     });
   }
 });
-
-
 
 propertiesRouter.get("/get-all-map-properties", async (req: Request, res: Response) => {
   try {
@@ -211,8 +87,8 @@ propertiesRouter.get("/get-all-map-properties", async (req: Request, res: Respon
     const ownerOccupancy = (req.query.ownerOccupancy as string) || "";
     const fromDate = (req.query.fromDate as string) || undefined;
     const toDate = (req.query.toDate as string) || undefined;
-    const yearBuiltFrom = parseInt(req.query.yearBuiltFrom as string, 10);
-    const yearBuiltTo = parseInt(req.query.yearBuiltTo as string, 10);
+    const yearBuiltFrom = parseInt(req.query.yearBuiltFrom as string);
+    const yearBuiltTo = parseInt(req.query.yearBuiltTo as string);
     const estimatedFrom = parseFloat(req.query.estimatedFrom as string);
     const estimatedTo = parseFloat(req.query.estimatedTo as string);
 
@@ -231,12 +107,12 @@ propertiesRouter.get("/get-all-map-properties", async (req: Request, res: Respon
 
     // Handle date range filter
     if (fromDate || toDate) {
-      filter.SALE_DATE_1 = {};
+      filter["Foreclosure Sale Date"] = {};
       if (fromDate) {
-        filter.SALE_DATE_1.$gte = fromDate;
+        filter["Foreclosure Sale Date"].$gte = fromDate;
       }
       if (toDate) {
-        filter.SALE_DATE_1.$lte = toDate;
+        filter["Foreclosure Sale Date"].$lte = toDate;
       }
     }
 
@@ -292,23 +168,23 @@ propertiesRouter.get("/get-all-map-properties", async (req: Request, res: Respon
 
     // Handle year built filter
     if (!isNaN(yearBuiltFrom) || !isNaN(yearBuiltTo)) {
-      filter.YEAR_BUILT = {};
+      filter["Year Built"] = {};
       if (!isNaN(yearBuiltFrom)) {
-        filter.YEAR_BUILT.$gte = yearBuiltFrom;
+        filter["Year Built"].$gte = yearBuiltFrom;
       }
       if (!isNaN(yearBuiltTo)) {
-        filter.YEAR_BUILT.$lte = yearBuiltTo;
+        filter["Year Built"].$lte = yearBuiltTo;
       }
     }
 
     // Handle estimated value filter
     if (!isNaN(estimatedFrom) || !isNaN(estimatedTo)) {
-      filter.ESTIMATED_VALUE = {};
+      filter["Zestimate"] = {};
       if (!isNaN(estimatedFrom)) {
-        filter.ESTIMATED_VALUE.$gte = estimatedFrom;
+        filter["Zestimate"].$gte = estimatedFrom;
       }
       if (!isNaN(estimatedTo)) {
-        filter.ESTIMATED_VALUE.$lte = estimatedTo;
+        filter["Zestimate"].$lte = estimatedTo;
       }
     }
 
@@ -325,17 +201,17 @@ propertiesRouter.get("/get-all-map-properties", async (req: Request, res: Respon
           Address: 1,
           State: 1,
           County: 1,
-          LAND_USE: 1,
-          SALE_DATE_1: 1,
+          "Property Type": 1,
+          "Foreclosure Sale Date": 1,
           PRINCIPAL_AMOUNT: 1,
           Latitude: 1,
           Longitude: 1,
-          ESTIMATED_VALUE: 1,
+          "Zestimate": 1,
           RENT_ZESTIMATE: 1,
           SQUARE_FEET: 1,
           BEDROOMS: 1,
           BATHROOMS: 1,
-          YEAR_BUILT: 1,
+          "Year Built": 1,
           OWNER_OCCUPANCY: 1,
           OWNERSHIP_TYPE: 1
         }
@@ -355,9 +231,9 @@ propertiesRouter.get("/get-all-map-properties", async (req: Request, res: Respon
     // Map the properties to the format needed for the frontend
     const mapProperties = properties.map((prop: {
       _id: any; Address: any; State: any; County: any; LAND_USE: any;
-      SALE_DATE_1: any; PRINCIPAL_AMOUNT: any; Latitude: any; Longitude: any;
+      "Foreclosure Sale Date": any; PRINCIPAL_AMOUNT: any; Latitude: any; Longitude: any;
       ESTIMATED_VALUE: any; RENT_ZESTIMATE: any; SQUARE_FEET: any;
-      BEDROOMS: any; BATHROOMS: any; YEAR_BUILT: any;
+      BEDROOMS: any; BATHROOMS: any; "Year Built": any;
       OWNER_OCCUPANCY: any; OWNERSHIP_TYPE: any;
     }) => ({
       _id: prop._id,
@@ -365,7 +241,7 @@ propertiesRouter.get("/get-all-map-properties", async (req: Request, res: Respon
       State: prop.State,
       County: prop.County,
       "Property Type": prop.LAND_USE,
-      "Foreclosure Sale Date": prop.SALE_DATE_1,
+      "Foreclosure Sale Date": prop["Foreclosure Sale Date"],
       "Principal Amount Owed": prop.PRINCIPAL_AMOUNT,
       Latitude: prop.Latitude,
       Longitude: prop.Longitude,
@@ -374,7 +250,7 @@ propertiesRouter.get("/get-all-map-properties", async (req: Request, res: Respon
       "Living Area (sq ft)": prop.SQUARE_FEET,
       Bedrooms: prop.BEDROOMS,
       Bathrooms: prop.BATHROOMS,
-      "Year Built": prop.YEAR_BUILT,
+      "Year Built": prop["Year Built"],
       OWNER_OCCUPANCY: prop.OWNER_OCCUPANCY,
       OWNERSHIP_TYPE: prop.OWNERSHIP_TYPE,
     }));

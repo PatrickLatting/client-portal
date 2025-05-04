@@ -162,7 +162,7 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
     },
     {
       headerName: "Estimated Value",
-      field: "ESTIMATED_VALUE",
+      field: "Zestimate",
       valueFormatter,
       flex: 1,
       minWidth: 180,
@@ -182,7 +182,7 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
     },
     {
       headerName: "Year Built",
-      field: "YEAR_BUILT",
+      field: "Year Built",
       flex: 1,
       minWidth: 180,
     },

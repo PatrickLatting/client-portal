@@ -15,7 +15,7 @@ const propertySchema = new mongoose.Schema({
   ESTIMATED_EQUITY: Number,
   LOT_SQUARE_FEET: Number,
   ASSESSMENT_YEAR: Number,
-  YEAR_BUILT: Number,
+  "Year Built": Number,
   PARKING_SPACES: Number,
   PROPERTIES_OWNED: Number,
   SQUARE_FEET: Number,

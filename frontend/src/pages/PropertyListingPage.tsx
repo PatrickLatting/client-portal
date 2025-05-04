@@ -23,8 +23,6 @@ import { PropertyDetails } from "../types/propertyTypes";
 import { downloadFile } from "../utils/downloadFiles";
 import { Skeleton } from "../components/ui/skeleton";
 import LoadingSpinner from "../components/LoadingSpinner ";
-import { DateRange } from "react-day-picker";
-import { format } from "date-fns";
 import React from "react";
 import { MapIcon } from "lucide-react"; // Add this import
 const PropertyListingMap = lazy(
@@ -35,9 +33,6 @@ const MultiSelector = lazy(
 );
 const PropertyListingTable = lazy(
   () => import("../components/propertyListing/PropertyLisitingTable")
-);
-const DateRangePicker = lazy(
-  () => import("../components/propertyListing/DateRangePicker")
 );
 // Pagination is now integrated within the PropertyListingTable component
 
@@ -81,18 +76,10 @@ const PropertyListingPage = () => {
   });
 
   const [showMap, setShowMap] = useState(false);
-  const [allCounties, setAllCounties] = useState<
-    { label: string; value: string }[]
-  >([]);
-  const [allOwnerTypes, setAllOwnerTypes] = useState<
-    { label: string; value: string }[]
-  >([]);
-  const [allPropertyTypes, setAllPropertyTypes] = useState<
-    { label: string; value: string }[]
-  >([]);
-  const [allStates, setAllStates] = useState<
-    { label: string; value: string }[]
-  >([]);
+  const [allSaleDates, setAllSaleDates] = useState<string[]>([]);
+  const [allCounties, setAllCounties] = useState<string[]>([]);
+  const [allPropertyTypes, setAllPropertyTypes] = useState<string[]>([]);
+  const [allStates, setAllStates] = useState<string[]>([]);
   const [allOwnerOccupancy, setAllOwnerOccupancy] = useState<
     { label: string; value: string }[]
   >([]);
@@ -100,6 +87,15 @@ const PropertyListingPage = () => {
     colId: string;
     sort: "asc" | "desc" | null;
   } | null>(null);
+  const [selectedSaleDates, setSelectedSaleDates] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem("selectedSaleDates");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
   // Initialize filter states from localStorage with proper typing
   const [selectedCounty, setSelectedCounty] = useState<string[]>(() => {
     try {
@@ -128,47 +124,25 @@ const PropertyListingPage = () => {
     }
   });
 
-  const [selectedPropertyType, setSelectedPropertyType] = useState<string[]>(
-    () => {
-      try {
-        const saved = localStorage.getItem("selectedPropertyTypes");
-        return saved ? JSON.parse(saved) : [];
-      } catch {
-        return [];
-      }
-    }
-  );
-
-  const [selectedOwnerOccupancy, setSelectedOwnerOccupancy] = useState<
-    string[]
-  >(() => {
+  const [selectedPropertyType, setSelectedPropertyType] = useState<string[]>(() => {
     try {
-      const saved = localStorage.getItem("selectedOwnerOccupancy");
+      const saved = localStorage.getItem("selectedPropertyTypes");
       return saved ? JSON.parse(saved) : [];
     } catch {
       return [];
     }
   });
 
-  const [selectedDataRange, setSelectedDataRange] = useState<
-    DateRange | undefined
-  >(() => {
-    try {
-      const saved = localStorage.getItem("selectedDataRange");
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed && typeof parsed === "object") {
-          return {
-            from: parsed.from ? new Date(parsed.from) : undefined,
-            to: parsed.to ? new Date(parsed.to) : undefined,
-          };
-        }
+  const [selectedOwnerOccupancy, setSelectedOwnerOccupancy] = useState<string[]>(
+    () => {
+      try {
+        const saved = localStorage.getItem("selectedOwnerOccupancy");
+        return saved ? JSON.parse(saved) : [];
+      } catch {
+        return [];
       }
-      return undefined;
-    } catch {
-      return undefined;
     }
-  });
+  );
 
   const [selectedYearBuilt, setSelectedYearBuilt] = useState<{
     from?: string;
@@ -228,101 +202,29 @@ const PropertyListingPage = () => {
     return async () => {
       setLoading(true);
       try {
-        const fromDate = selectedDataRange?.from
-          ? format(selectedDataRange.from, "M/d/yyyy")
-          : undefined;
-        const toDate = selectedDataRange?.to
-          ? format(selectedDataRange.to, "M/d/yyyy")
-          : undefined;
-
         const queryParams = new URLSearchParams({
           search: debouncedSearch,
           page: currentPage.toString(),
           limit: itemsPerPage.toString(),
           ...(selectedCounty.length && { county: selectedCounty.join(",") }),
           ...(selectedState.length && { state: selectedState.join(",") }),
-          ...(selectedOwnerType.length && {
-            ownerType: selectedOwnerType.join(","),
-          }),
-          ...(selectedPropertyType.length && {
-            propertyType: selectedPropertyType.join(","),
-          }),
-          ...(selectedOwnerOccupancy.length && {
-            ownerOccupancy: selectedOwnerOccupancy.join(","),
-          }),
-          ...(fromDate && { fromDate }),
-          ...(toDate && { toDate }),
-          ...(selectedYearBuilt.from && {
-            yearBuiltFrom: selectedYearBuilt.from,
-          }),
+          ...(selectedOwnerType.length && { ownerType: selectedOwnerType.join(",") }),
+          ...(selectedPropertyType.length && { propertyType: selectedPropertyType.join(",") }),
+          ...(selectedOwnerOccupancy.length && { ownerOccupancy: selectedOwnerOccupancy.join(",") }),
+          ...(selectedSaleDates.length && { saleDates: selectedSaleDates.join(",") }),
+          ...(selectedYearBuilt.from && { yearBuiltFrom: selectedYearBuilt.from }),
           ...(selectedYearBuilt.to && { yearBuiltTo: selectedYearBuilt.to }),
-          ...(selectedEstimatedValue.from && {
-            estimatedFrom: selectedEstimatedValue.from,
-          }),
-          ...(selectedEstimatedValue.to && {
-            estimatedTo: selectedEstimatedValue.to,
-          }),
-          // Add sort parameters if available
-          ...(sortParams &&
-            sortParams.colId &&
-            sortParams.sort && {
-              sortColumn: sortParams.colId,
-              sortDirection: sortParams.sort,
-            }),
+          ...(selectedEstimatedValue.from && { estimatedFrom: selectedEstimatedValue.from }),
+          ...(selectedEstimatedValue.to && { estimatedTo: selectedEstimatedValue.to }),
+          ...(sortParams && sortParams.colId && sortParams.sort && { sortColumn: sortParams.colId, sortDirection: sortParams.sort }),
         });
 
-        const res = await axios.get(
-          `${process.env.REACT_APP_API_BASE_URL}/get-properties?${queryParams}`
-        );
+        const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/get-properties?${queryParams}`);
 
-        // If user has selected a specific items per page, slice the data accordingly
-        const allData = res.data.data;
-        let filteredData = allData;
-        let calculatedTotalPages = res.data.meta.totalPages;
-
-        // Only slice the data if user has explicitly set items per page
-        const userSelectedItemsPerPage = localStorage.getItem("itemsPerPage");
-        if (userSelectedItemsPerPage) {
-          const startIndex = (currentPage - 1) * itemsPerPage;
-          const endIndex = startIndex + itemsPerPage;
-          filteredData = allData.slice(startIndex, endIndex);
-
-          // Recalculate total pages based on user's selection
-          calculatedTotalPages = Math.ceil(allData.length / itemsPerPage);
-        }
-
-        setProperties(filteredData);
+        setProperties(res.data.data);
         setTotalPages(res.data.meta.totalPages);
 
-        // Update filter options only on initial load
         if (initialLoad) {
-          setAllCounties(
-            res.data.allCounties.filter(Boolean).map((county: any) => ({
-              label: county,
-              value: county,
-            }))
-          );
-          setAllOwnerTypes(
-            res.data.allOwnerTypes.filter(Boolean).map((ownerType: any) => ({
-              label: ownerType,
-              value: ownerType,
-            }))
-          );
-          setAllPropertyTypes(
-            res.data.allPropertyTypes
-              .filter(Boolean)
-              .map((propertyType: any) => ({
-                label: propertyType,
-                value: propertyType,
-              }))
-          );
-          setAllStates(
-            res.data.allStates.filter(Boolean).map((state: any) => ({
-              label: state,
-              value: state,
-            }))
-          );
-
           setAllOwnerOccupancy(
             res.data.allOwnerOccupancy.map((occupancy: string) => ({
               label: occupancy,
@@ -347,12 +249,29 @@ const PropertyListingPage = () => {
     selectedOwnerType,
     selectedPropertyType,
     selectedOwnerOccupancy,
-    selectedDataRange,
+    selectedSaleDates,
     selectedYearBuilt,
     selectedEstimatedValue,
     initialLoad,
-    sortParams, // Include sortParams in dependencies
+    sortParams,
   ]);
+
+  // Fetch all filter options
+  useEffect(() => {
+    const fetchFilterOptions = async () => {
+      try {
+        const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/get-properties`);
+        setAllSaleDates(res.data.allSaleDates || []);
+        setAllCounties(res.data.allCounties || []);
+        setAllPropertyTypes(res.data.allPropertyTypes || []);
+        setAllStates(res.data.allStates || []);
+      } catch (err) {
+        console.error("Error fetching filter options:", err);
+      }
+    };
+
+    fetchFilterOptions();
+  }, []);
 
   // 2. Add a reference to track initial sort restoration
   const initialSortRestored = React.useRef(false);
@@ -397,7 +316,6 @@ const PropertyListingPage = () => {
     }
   };
 
-
   useEffect(() => {
     fetchProperties();
   }, [
@@ -408,13 +326,13 @@ const PropertyListingPage = () => {
     selectedOwnerType,
     selectedPropertyType,
     selectedOwnerOccupancy,
-    selectedDataRange,
+    selectedSaleDates,
     selectedYearBuilt,
     selectedEstimatedValue,
-    itemsPerPage, // Add itemsPerPage to dependencies
-    sortParams, // Keep sortParams here
+    itemsPerPage,
+    sortParams,
   ]);
- 
+
   useEffect(() => {
     if (!initialLoad) {
       setCurrentPage(1);
@@ -426,7 +344,7 @@ const PropertyListingPage = () => {
     selectedOwnerType,
     selectedPropertyType,
     selectedOwnerOccupancy,
-    selectedDataRange,
+    selectedSaleDates,
     selectedYearBuilt,
     selectedEstimatedValue,
     initialLoad,
@@ -490,7 +408,7 @@ const PropertyListingPage = () => {
       })
     );
   };
- 
+
   const fetchAllPropertiesForMap = useCallback(async () => {
     // Set loading state for map
     setMapLoading(true);
@@ -510,13 +428,7 @@ const PropertyListingPage = () => {
         ...(selectedOwnerOccupancy.length && {
           ownerOccupancy: selectedOwnerOccupancy.join(","),
         }),
-        // Date range filters
-        ...(selectedDataRange?.from && {
-          fromDate: format(selectedDataRange.from, "M/d/yyyy"),
-        }),
-        ...(selectedDataRange?.to && {
-          toDate: format(selectedDataRange.to, "M/d/yyyy"),
-        }),
+        ...(selectedSaleDates.length && { saleDates: selectedSaleDates.join(",") }),
         // Year built filters
         ...(selectedYearBuilt.from && {
           yearBuiltFrom: selectedYearBuilt.from,
@@ -549,7 +461,7 @@ const PropertyListingPage = () => {
     selectedOwnerType,
     selectedPropertyType,
     selectedOwnerOccupancy,
-    selectedDataRange,
+    selectedSaleDates,
     selectedYearBuilt,
     selectedEstimatedValue,
   ]);
@@ -573,7 +485,7 @@ const PropertyListingPage = () => {
       selectedOwnerType.length > 0 ||
       selectedPropertyType.length > 0 ||
       selectedOwnerOccupancy.length > 0 ||
-      selectedDataRange?.from !== undefined ||
+      selectedSaleDates.length > 0 ||
       selectedYearBuilt?.from !== undefined ||
       selectedYearBuilt?.to !== undefined ||
       selectedEstimatedValue?.from !== undefined ||
@@ -593,7 +505,7 @@ const PropertyListingPage = () => {
     selectedOwnerType,
     selectedPropertyType,
     selectedOwnerOccupancy,
-    selectedDataRange,
+    selectedSaleDates,
     selectedYearBuilt,
     selectedEstimatedValue,
     fetchAllPropertiesForMap,
@@ -604,7 +516,7 @@ const PropertyListingPage = () => {
     setSelectedOwnerType([]);
     setSelectedPropertyType([]);
     setSelectedOwnerOccupancy([]);
-    setSelectedDataRange(undefined);
+    setSelectedSaleDates([]);
     setSelectedYearBuilt({ from: undefined, to: undefined });
     setSelectedEstimatedValue({ from: undefined, to: undefined });
     setSearchInput("");
@@ -614,7 +526,7 @@ const PropertyListingPage = () => {
     localStorage.removeItem("selectedOwnerTypes");
     localStorage.removeItem("selectedPropertyTypes");
     localStorage.removeItem("selectedOwnerOccupancy");
-    localStorage.removeItem("selectedDataRange");
+    localStorage.removeItem("selectedSaleDates");
     localStorage.removeItem("selectedYearBuilt");
     localStorage.removeItem("selectedEstimatedValue");
   };
@@ -751,7 +663,7 @@ const PropertyListingPage = () => {
               selectedOwnerType.length > 0 ||
               selectedPropertyType.length > 0 ||
               selectedOwnerOccupancy.length > 0 ||
-              selectedDataRange?.from !== undefined ||
+              selectedSaleDates.length > 0 ||
               selectedYearBuilt?.from !== undefined ||
               selectedYearBuilt?.to !== undefined ||
               selectedEstimatedValue?.from !== undefined ||
@@ -768,75 +680,47 @@ const PropertyListingPage = () => {
                 Clear all filters
               </Button>
             )}
+            
             <Suspense fallback={<Skeleton className="h-12" />}>
               <MultiSelector
-                key={selectedCounty.join(",")}
-                options={allCounties}
-                placeholder="Select County"
-                onChange={handleCountyChange}
-                selectedValues={selectedCounty}
-                buttonWidth="w-full"
-                storageKey="selectedCounties"
-              />
-            </Suspense>
-            <Suspense fallback={<Skeleton className="h-12" />}>
-              <MultiSelector
-                key={selectedState.join(",")}
-                options={allStates}
+                options={allStates.map((state) => ({ label: state, value: state }))}
                 placeholder="Select State"
-                onChange={handleStateChange}
+                onChange={(states) => setSelectedState(states)}
                 selectedValues={selectedState}
                 buttonWidth="w-full"
-                storageKey="selectedStates"
               />
             </Suspense>
+
             <Suspense fallback={<Skeleton className="h-12" />}>
               <MultiSelector
-                key={selectedPropertyType.join(",")}
-                options={allPropertyTypes}
+                options={allCounties.map((county) => ({ label: county, value: county }))}
+                placeholder="Select County"
+                onChange={(counties) => setSelectedCounty(counties)}
+                selectedValues={selectedCounty}
+                buttonWidth="w-full"
+              />
+            </Suspense>
+            
+            <Suspense fallback={<Skeleton className="h-12" />}>
+              <MultiSelector
+                options={allSaleDates.map((date) => ({ label: date, value: date }))}
+                placeholder="Select Sale Dates"
+                onChange={(dates) => setSelectedSaleDates(dates)}
+                selectedValues={selectedSaleDates}
+                buttonWidth="w-full"
+              />
+            </Suspense>
+            
+            <Suspense fallback={<Skeleton className="h-12" />}>
+              <MultiSelector
+                options={allPropertyTypes.map((type) => ({ label: type, value: type }))}
                 placeholder="Select Property Type"
-                onChange={handlePropertyTypeChange}
+                onChange={(types) => setSelectedPropertyType(types)}
                 selectedValues={selectedPropertyType}
                 buttonWidth="w-full"
-                storageKey="selectedPropertyTypes"
               />
             </Suspense>
-            <Suspense fallback={<Skeleton className="h-12" />}>
-              <DateRangePicker
-                date={selectedDataRange}
-                title="Sale Date Range"
-                setDate={(newDateRange) => {
-                  if (typeof newDateRange === "function") {
-                    setSelectedDataRange((prev) => {
-                      const value = newDateRange(prev);
-                      localStorage.setItem(
-                        "selectedDataRange",
-                        JSON.stringify({
-                          from: value?.from
-                            ? value.from.toISOString()
-                            : undefined,
-                          to: value?.to ? value.to.toISOString() : undefined,
-                        })
-                      );
-                      return value;
-                    });
-                  } else {
-                    setSelectedDataRange(newDateRange);
-                    localStorage.setItem(
-                      "selectedDataRange",
-                      JSON.stringify({
-                        from: newDateRange?.from
-                          ? newDateRange.from.toISOString()
-                          : undefined,
-                        to: newDateRange?.to
-                          ? newDateRange.to.toISOString()
-                          : undefined,
-                      })
-                    );
-                  }
-                }}
-              />
-            </Suspense>
+            
 
             <div className="p-3 border-gray-200 border rounded-md">
               <div>Year Built</div>
