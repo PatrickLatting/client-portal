@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useState, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios, { AxiosError } from "axios";
 import { Badge } from "../components/ui/badge";
@@ -11,11 +11,10 @@ import { PropertyDetails } from "../types/propertyTypes";
 import ForeclosureSkeleton from "../components/ForeclosureSkeleton";
 import PropertyImageCarousel from "../components/ImgCarousel";
 import PropertyActions from "../components/propertyDetails/PropertyActions";
-import ComparableMap from "../components/propertyListing/ComparableMap";
 import { Button } from "../components/ui/button";
-import { useMemo } from "react";
-
-// import PropertyImageCarousel, { ImgCarousel } from "../components/ImgCarousel";
+import "leaflet/dist/leaflet.css";
+import L from "leaflet";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 
 const PropertyDetailsPage = () => {
   const [property, setProperty] = useState<PropertyDetails | null>(null);
@@ -56,12 +55,38 @@ const PropertyDetailsPage = () => {
     fetchProperty();
   }, []);
 
-  // near the top of your component, alongside your other hooks:
+  const propertyDetailsSection = useMemo(() => {
+    if (!property) return [];
+    return [
+      { label: "Zestimate", value: property["Zestimate"] },
+      { label: "Rent Zestimate", value: (property as any)["Rent Zestimate"] },
+      { label: "Bedrooms", value: property.Bedrooms },
+      { label: "Bathrooms", value: property.Bathrooms },
+      { label: "Square Feet", value: property["Living Area (sq ft)"] },
+      { label: "Lot Size", value: property["Lot Size"] },
+      { label: "Year Built", value: property["Year Built"] },
+      
+      { label: "Owner Name", value: (property as any)["Borrower Name(s)"] },
+      
+    ];
+  }, [property]);
 
+  
 
-// HOOKS NEEDED TO SHOW FIRST THREE ROWS OF DATA IN COMPS TABLE + BLUR THE REST//
+  const foreclosureDetailsSection = useMemo(() => {
+    if (!property) return [];
+    return [
+      { label: "Foreclosure Status", value: (property as any)["matched_Foreclosure Status"], blurIfLoggedOut: true },
+      { label: "Opening Bid", value: (property as any)["matched_Current Bid"], blurIfLoggedOut: true },
+      { label: "Auction Date", value: (property as any)["Foreclosure Sale Date"] },
+      { label: "Original Debt Amount", value: (property as any)["Principal Amount Owed"] },
+      { label: "Lender Name", value: (property as any)["Lender Name"] },
+      { label: "Attorney Phone Number", value: (property as any)["Attorney Phone Number"] },
+      { label: "Foreclosure Sale Location", value: (property as any)["Foreclosure Sale Location"] },
+      { label: "Loan Origination Date", value: (property as any)["Date of Debt"] },
+    ];
+  }, [property]);
 
-  // === build a single array of all comparables once ===
   const allComps = useMemo(() => {
     if (!property) return [];
     const comps: Array<{
@@ -80,68 +105,84 @@ const PropertyDetailsPage = () => {
       lat?: number;
       lng?: number;
     }> = [];
+
     for (let i = 0; i < 25; i++) {
       const index = i + 1;
       for (const { prefix, scoreKey } of [
         { prefix: "SALE_COMP", scoreKey: `COMP_SCORE_SALE_COMP_${index}` },
-        { prefix: "REDFIN",     scoreKey: `COMP_SCORE_REDFIN_${index}`     },
+        { prefix: "REDFIN", scoreKey: `COMP_SCORE_REDFIN_${index}` },
       ] as const) {
         const address = (property as any)[`${prefix}_ADDRESS_${index}`];
         if (!address) continue;
-        const lat       = (property as any)[`${prefix}_LATITUDE_${index}`];
-        const lng       = (property as any)[`${prefix}_LONGITUDE_${index}`];
-        const dateSold  = (property as any)[`${prefix}_DATESOLD_${index}`];
-        const formattedDateSold = typeof dateSold === "number" ? new Date(dateSold) : dateSold;
-        const price     = (property as any)[`${prefix}_PRICE_${index}`];
-        const bedrooms  = (property as any)[`${prefix}_BEDROOMS_${index}`];
-        const bathrooms = (property as any)[`${prefix}_BATHROOMS_${index}`];
-        const sqft      = (property as any)[`${prefix}_LIVINGAREA_${index}`];
-        const lotSize   = (property as any)[`${prefix}_LOTSIZE_${index}`];
-        const distance  = (property as any)[`${prefix}_DISTANCE_FROM_PROPERTY_${index}`];
-        const compScore = (property as any)[scoreKey];
-        const rawUrl    = (property as any)[`${prefix}_URL_${index}`] as string | undefined;
-        const compUrl   = prefix === "REDFIN" && rawUrl
-          ? `https://www.redfin.com${rawUrl}`
-          : rawUrl;
-        const zillowLink = (property as any)[`${prefix}_ZILLOW_LINK_${index}`] as string | undefined;
 
+        const compScore = (property as any)[scoreKey];
+        if (compScore === "Duplicate - already included in list") {
+          continue;
+        }
+
+        const lat = (property as any)[`${prefix}_LATITUDE_${index}`];
+        const lng = (property as any)[`${prefix}_LONGITUDE_${index}`];
+        const dateSoldRaw = (property as any)[`${prefix}_DATESOLD_${index}`];
+        const formattedDateSold =
+          typeof dateSoldRaw === "number" ? new Date(dateSoldRaw) : dateSoldRaw;
+        const price = (property as any)[`${prefix}_PRICE_${index}`];
+        const bedrooms = (property as any)[`${prefix}_BEDROOMS_${index}`];
+        const bathrooms = (property as any)[`${prefix}_BATHROOMS_${index}`];
+        const sqft = (property as any)[`${prefix}_LIVINGAREA_${index}`];
+        const lotSize = (property as any)[`${prefix}_LOTSIZE_${index}`];
+        const distanceRaw = (property as any)[`${prefix}_DISTANCE_FROM_PROPERTY_${index}`];
+        const distance = distanceRaw ? Number(distanceRaw) : undefined;
+
+        const rawUrl = (property as any)[`${prefix}_URL_${index}`] as string | undefined;
+        const zillowLink = prefix === "SALE_COMP"
+          ? (property as any)[`SALE_COMP_ZILLOW_LINK_${index}`] as string | undefined
+          : undefined;
+        const compUrl = prefix === "REDFIN" && rawUrl
+          ? `https://www.redfin.com${rawUrl}`
+          : zillowLink;
 
         comps.push({
           key: `${prefix}_${index}`,
           address,
-          lat:   lat ? Number(lat) : undefined,
-          lng:   lng ? Number(lng) : undefined, 
+          lat: lat ? Number(lat) : undefined,
+          lng: lng ? Number(lng) : undefined,
           dateSold: formattedDateSold,
           price,
           bedrooms,
           bathrooms,
           sqft,
           lotSize,
-          distance: distance ? Number(distance) : undefined,
+          distance,
           compScore,
           compScoreNumeric: typeof compScore === "number" ? compScore : null,
           compUrl,
-          
         });
       }
     }
-    // sort by score, then distance
+
     comps.sort((a, b) => {
-      if (a.compScoreNumeric != null && b.compScoreNumeric != null)
+      if (a.compScoreNumeric != null && b.compScoreNumeric != null) {
         return b.compScoreNumeric - a.compScoreNumeric;
+      }
       if (a.compScoreNumeric != null) return -1;
       if (b.compScoreNumeric != null) return 1;
       return (a.distance ?? Infinity) - (b.distance ?? Infinity);
     });
+
     return comps;
   }, [property]);
 
-  // only first three for people who aren’t logged in
   const mapComps = loggedIn ? allComps : allComps.slice(0, 3);
 
-//END OF THE BLOCK FOR THE THREE ROWS FUNCTIONALITY
-
   const saveProperty = async () => {
+    if (!loggedIn) {
+      toast({
+        title: "⚠️ You must log in to save properties",
+        variant: "default",
+      });
+      return;
+    }
+
     setSaveLoading(true);
     try {
       await axios.post(
@@ -169,7 +210,6 @@ const PropertyDetailsPage = () => {
     }
   };
 
-  console.log("property", property);
   const unsaveProperty = async () => {
     setSaveLoading(true);
     try {
@@ -201,223 +241,74 @@ const PropertyDetailsPage = () => {
     }
   };
 
-  const orderImage = async () => {
-    setOrderReqLoading(true);
-    try {
-      const res = await axios.post(
-        `${process.env.REACT_APP_API_BASE_URL}/property/action`,
-        {
-          propertyId: property?._id,
-          actionType: "imageRequest",
-          address: property?.Address,
-          emailId: user?.emailId,
-        },
-        {
-          withCredentials: true,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      toast({
-        title: "✅ Image order request sent successfully",
-        variant: "default",
-      });
-      const updatedPropertiesActions = res.data.propertiesActions;
-      setUser((prevUser) => {
-        if (prevUser) {
-          return {
-            ...prevUser,
-            propertiesActions: updatedPropertiesActions,
-          };
-        }
-        return null;
-      });
-    } catch (err) {
-      const axiosError = err as AxiosError;
-      if (axiosError.response?.status === 400) {
-        toast({
-          title: "❌ Error",
-          description: "Failed to place bid",
-          variant: "default",
-        });
-      }
-    } finally {
-      setOrderReqLoading(false);
-    }
+  const comparablePropertyIconNumeric = new L.Icon({
+    iconUrl: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='25' height='41' viewBox='0 0 25 41'%3E%3Cpath fill='%2316A34A' stroke='%23fff' stroke-width='1.5' d='M12.5 1C6.148 1 1 6.148 1 12.5C1 18.852 12.5 40 12.5 40S24 18.852 24 12.5C24 6.148 18.852 1 12.5 1Z'/%3E%3Ccircle fill='%23fff' cx='12.5' cy='12.5' r='5'/%3E%3C/svg%3E",
+    iconSize: [25, 41],
+    iconAnchor: [12.5, 41],
+    popupAnchor: [0, -41],
+    shadowUrl:
+      "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+    shadowSize: [41, 41],
+    shadowAnchor: [12, 41],
+  });
+
+  L.Icon.Default.mergeOptions({
+    iconRetinaUrl:
+      "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
+    iconUrl:
+      "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
+    shadowUrl:
+      "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+  });
+
+  const mainPropertyIcon = new L.Icon({
+    iconUrl: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='25' height='41' viewBox='0 0 25 41'%3E%3Cpath fill='%23e53e3e' stroke='%23fff' stroke-width='1.5' d='M12.5 1C6.148 1 1 6.148 1 12.5C1 18.852 12.5 40 12.5 40S24 18.852 24 12.5C24 6.148 18.852 1 12.5 1Z'/%3E%3Ccircle fill='%23fff' cx='12.5' cy='12.5' r='5'/%3E%3C/svg%3E",
+    iconSize: [25, 41],
+    iconAnchor: [12.5, 41],
+    popupAnchor: [0, -41],
+    shadowUrl:
+      "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+    shadowSize: [41, 41],
+    shadowAnchor: [12, 41],
+    className: "main-property-marker",
+  });
+
+  const comparablePropertyIcon = new L.Icon({
+    iconUrl: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='25' height='41' viewBox='0 0 25 41'%3E%3Cpath fill='%231E3A8A' stroke='%23fff' stroke-width='1.5' d='M12.5 1C6.148 1 1 6.148 1 12.5C1 18.852 12.5 40 12.5 40S24 18.852 24 12.5C24 6.148 18.852 1 12.5 1Z'/%3E%3Ccircle fill='%23fff' cx='12.5' cy='12.5' r='5'/%3E%3C/svg%3E",
+    iconSize: [25, 41],
+    iconAnchor: [12.5, 41],
+    popupAnchor: [0, -41],
+    shadowUrl:
+      "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+    shadowSize: [41, 41],
+    shadowAnchor: [12, 41],
+  });
+
+  const FitBounds = ({ mainProperty, comparableProperties }: { mainProperty: any; comparableProperties: any[] }) => {
+    const map = useMap();
+    useEffect(() => {
+      if (!mainProperty && comparableProperties.length === 0) return;
+      const points: [number, number][] = [];
+      if (mainProperty) points.push([mainProperty.lat, mainProperty.lng]);
+      comparableProperties.forEach(comp => comp.lat && comp.lng && points.push([comp.lat, comp.lng]));
+      if (points.length === 1) map.setView(points[0], 15);
+      else if (points.length > 1) map.fitBounds(L.latLngBounds(points), { padding: [50, 50] });
+    }, [map, mainProperty, comparableProperties]);
+    return null;
   };
-
-  // Break out the details into separate headings within one container
-  const propertyDetailsSection = [
-    {
-      label: "Zillow low estimate",
-      value:
-        property?.["Zillow low estimate"] != null
-          ? `$${Math.round(property["Zillow low estimate"]).toLocaleString()}`
-          : "-",
-    },
-    {
-      label: "Zillow high estimate",
-      value:
-        property?.["Zillow high estimate"] != null
-          ? `$${Math.round(property["Zillow high estimate"]).toLocaleString()}`
-          : "-",
-    },
-    {
-      label: "Rent Zestimate",
-      value:
-        property?.["Rent Zestimate"] != null
-          ? `$${Math.round(property["Rent Zestimate"]).toLocaleString()}`
-          : "-",
-    },
-    {
-      label: "Independent Valuation",
-      value:
-        property?.["Sale Comp Valuation by sq ft (median)"] != null
-          ? `$${Math.round(
-              property["Sale Comp Valuation by sq ft (median)"]
-            ).toLocaleString()}`
-          : "-",
-    },
-    { label: "Year Built", value: property?.["Year Built"] },
-    { label: "Square Feet", value: property?.["Living Area (sq ft)"] },
-    { label: "Bedrooms", value: property?.Bedrooms },
-    { label: "Bathrooms", value: property?.Bathrooms },
-    {
-      label: "Lot Acres",
-      value: property?.["Lot Size"]
-        ? (Number(property["Lot Size"].replace(/[^\d.]/g, "")) / 43560).toFixed(
-            2
-          )
-        : null,
-    },
-    {
-      label: "Tax Amount",
-      value: property?.["Annual Tax Amount"]
-        ? new Intl.NumberFormat("en-US", {
-            style: "currency",
-            currency: "USD",
-            maximumFractionDigits: 0,
-          }).format(Number(property["Annual Tax Amount"]))
-        : "-",
-    },
-  ];
-
-  const foreclosureDetailsSection = [
-    {
-      label: "Original Loan Balance",
-      value:
-        property?.["Principal Amount Owed"] !== undefined
-          ? `$${Number(property["Principal Amount Owed"]).toLocaleString()}`
-          : "Not Available",
-    },
-    { label: "Trustee", value: property?.["Law Firm Name"] ?? "Not Available" },
-    { label: "Lender", value: property?.["Lender Name"] ?? "Not Available" },
-    {
-      label: "Foreclosure Sale Date",
-      value: property?.["Foreclosure Sale Date"]
-        ? new Date(property["Foreclosure Sale Date"]).toLocaleDateString(
-            "en-US"
-          )
-        : "Not Available",
-    },
-    {
-      label: "Date of Debt",
-      value: property?.["Date of Debt"] ?? "Not Available",
-    },
-    {
-      label: "Trustee Phone Number",
-      value: property?.["Attorney Phone Number"] ?? "Not Available",
-    },
-    {
-      label: "Lender Phone Number",
-      value: property?.["Lender Phone Number"] ?? "Not Available",
-    },
-
-    {
-      label: "Sale Location",
-      value: property?.["Foreclosure Sale Location"] ?? "Not Available",
-    },
-  ];
-
-  const ownershipDetailsSection = !property
-    ? []
-    : [
-        { label: "Borrower Name(s)", value: property["Borrower Name(s)"] },
-        {
-          label: "Last Purchased",
-          value: (() => {
-            for (let i = 1; i <= 20; i++) {
-              const event = (property as any)[`PRICE_HISTORY_EVENT_${i}`];
-              if (event === "Sold") {
-                return (property as any)[`PRICE_HISTORY_DATE_${i}`];
-              }
-            }
-            return "Not Available";
-          })(),
-        },
-        {
-          label: "Years of Ownership",
-          value: (() => {
-            for (let i = 1; i <= 20; i++) {
-              const event = (property as any)[`PRICE_HISTORY_EVENT_${i}`];
-              const date = (property as any)[`PRICE_HISTORY_DATE_${i}`];
-              if (event === "Sold" && date) {
-                return Math.floor(
-                  (new Date().getTime() - new Date(date).getTime()) /
-                    (1000 * 60 * 60 * 24 * 365.25)
-                );
-              }
-            }
-            return "Not Available";
-          })(),
-        },
-      ];
-
-  if (loading) {
-    return (
-      <div className="flex justify-center w-full items-center h-screen">
-        <ForeclosureSkeleton />
-      </div>
-    );
-  }
-
-  // Function to check if the property data is mostly empty
-  const isPropertyDataIncomplete = (property: PropertyDetails | null) => {
-    if (!property) return true;
-
-    const importantFields = [
-      property.Zestimate,
-      property["Living Area (sq ft)"],
-      property.Bedrooms,
-      property.Bathrooms,
-      property["Year Built"],
-      property["Annual Tax Amount"],
-    ];
-
-    return importantFields.every(
-      (value) =>
-        !value ||
-        String(value) === "N/A" ||
-        String(value) === "-" ||
-        String(value) === "Not Available"
-    );
-  };
-
 
   const toggleMapView = () => {
     setShowMap(!showMap);
   };
+
   return (
     <><div className="container mx-auto px-4 py-6 max-w-7xl">
-      {/* Header Section */}
       <div className="space-y-6 mb-20">
         <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold text-center">
           {property?.Address}
         </h1>
       </div>
       <div className="flex flex-col md:flex-row gap-4 mb-8">
-        {/* Left column: Save Button (Actions) + Property Details */}
         <div className="md:w-1/3 space-y-4">
           <PropertyActions
             property={property}
@@ -447,7 +338,6 @@ const PropertyDetailsPage = () => {
           </section>
         </div>
 
-        {/* Right column: Image Carousel */}
         <div className="md:w-2/3">
           <div className="bg-white rounded-lg shadow-lg overflow-hidden">
             <PropertyImageCarousel
@@ -547,24 +437,7 @@ const PropertyDetailsPage = () => {
         </div>
       </div>
 
-      {/* Combined Details Section in a single container */}
       <div className="mb-6 bg-white rounded-lg shadow-lg p-6 space-y-8">
-        {/* Ownership Details Header & Grid */}
-        <section>
-          <h2 className="text-x1 md:text-2xl font-semibold mb-4">
-            Ownership Details
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
-            {ownershipDetailsSection.map((item, index) => (
-              <div key={index} className="space-y-2">
-                <div className="font-medium text-blue-900">{item.label}</div>
-                <div className="text-gray-700">{item.value || "-"}</div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <hr className="border-t border-gray-200 my-4" />
 
         <section>
           <h2 className="text-xl md:text-2xl font-semibold mb-4">
@@ -573,13 +446,17 @@ const PropertyDetailsPage = () => {
           <div className="grid grid-cols-4">
             {foreclosureDetailsSection.map((item, index) => {
               const isLastColumn = (index + 1) % 4 === 0;
+              const shouldBlur = item.blurIfLoggedOut && !loggedIn;
+
               return (
                 <div
                   key={index}
                   className={`p-4 ${!isLastColumn ? "border-r border-gray-300" : ""}`}
                 >
                   <div className="font-medium text-blue-900">{item.label}</div>
-                  <div className="text-gray-700">{item.value || "-"}</div>
+                  <div className={`text-gray-700 ${shouldBlur ? "blur-sm" : ""}`}>
+                    {item.value || "-"}
+                  </div>
                 </div>
               );
             })}
@@ -587,10 +464,8 @@ const PropertyDetailsPage = () => {
         </section>
       </div>
 
-      {/* Sale and Assessment History Section */}
       {property && (
         <div className="mb-8 bg-white rounded-lg shadow-lg p-6 space-y-8">
-          {/* Recent Sale History Table */}
           <section>
             <h2 className="text-xl md:text-2xl font-semibold mb-4">
               Sale History
@@ -653,21 +528,7 @@ const PropertyDetailsPage = () => {
         </div>
       )}
 
-      {/* Map Section */}
-      <section className="mb-8">
-        {property?.Latitude && property?.Longitude ? (
-          <div className="h-96 bg-white rounded-lg shadow-lg overflow-hidden">
-            <MapComponent
-              latitude={property.Latitude}
-              longitude={property.Longitude}
-              zoom={12} />
-          </div>
-        ) : (
-          <div className="flex justify-center items-center h-96 bg-white rounded-lg shadow-lg">
-            <Loader2 className="animate-spin w-8 h-8" />
-          </div>
-        )}
-      </section>
+      
 
       <section className="mt-8">
         <h2 className="text-xl md:text-2xl font-semibold mb-4">
@@ -675,7 +536,6 @@ const PropertyDetailsPage = () => {
         </h2>
         <table className="w-full text-left border-collapse">
           <tbody>
-            {/* Sale Output Group */}
             <tr className="bg-gray-200">
               <td className="px-4 py-2 font-semibold" colSpan={2}>
                 Sale Output
@@ -725,7 +585,6 @@ const PropertyDetailsPage = () => {
               </td>
             </tr>
 
-            {/* Third-party Group */}
             <tr className="bg-gray-200">
               <td className="px-4 py-2 font-semibold" colSpan={2}>
                 Third-party
@@ -763,6 +622,86 @@ const PropertyDetailsPage = () => {
         </table>
       </section>
 
+      
+      <section className="mb-8">
+        {property?.Latitude !== undefined && property?.Longitude !== undefined && (
+          <div className="bg-white rounded-lg shadow-lg overflow-hidden p-6">
+            <h2 className="text-xl font-bold mb-4">Comparable Sales Map View</h2>
+            <div className="w-full" style={{ height: "600px" }}>
+              <MapContainer center={[property.Latitude, property.Longitude]} zoom={12} style={{ height: "100%", width: "100%" }}>
+                <FitBounds mainProperty={{ lat: property.Latitude, lng: property.Longitude }} comparableProperties={mapComps} />
+                <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                <Marker position={[property.Latitude, property.Longitude]} icon={mainPropertyIcon}>
+                  <Popup>{property.Address}</Popup>
+                </Marker>
+                {mapComps
+                  .filter((comp) => comp.lat !== undefined && comp.lng !== undefined)
+                  .map((comp, index) => {
+                    const isNumeric = typeof comp.compScore === "number";
+                    const markerIcon = isNumeric ? comparablePropertyIconNumeric : comparablePropertyIcon;
+                    const detailsUrl = comp.compUrl;
+
+                    return (
+                      <Marker
+                        key={`comp-${index}`}
+                        position={[comp.lat as number, comp.lng as number]}
+                        icon={markerIcon}
+                      >
+                        <Popup>
+                          <div className="p-2 max-w-md">
+                            <h3 className={`font-bold ${isNumeric ? "text-green-600" : "text-blue-600"}`}>
+                              {detailsUrl ? (
+                                <a href={detailsUrl} target="_blank" rel="noopener noreferrer" className="underline">
+                                  {comp.address}
+                                </a>
+                              ) : (
+                                comp.address
+                              )}
+                            </h3>
+
+                            {comp.dateSold && (
+                              <p><span className="font-medium">Date Sold:</span> {new Date(comp.dateSold).toLocaleDateString("en-US")}</p>
+                            )}
+
+                            {comp.price && (
+                              <p><span className="font-medium">Price:</span> ${Number(comp.price).toLocaleString()}</p>
+                            )}
+
+                            <div className="flex flex-wrap gap-2 my-2">
+                              {comp.bedrooms && <span>{comp.bedrooms} bed</span>}
+                              {comp.bathrooms && <span>{comp.bathrooms} bath</span>}
+                              {comp.sqft && <span>{comp.sqft} sqft</span>}
+                            </div>
+
+                            {comp.distance != null && (
+                              <p><span className="font-medium">Distance:</span> {typeof comp.distance === "number" ? comp.distance.toFixed(2) : comp.distance} miles</p>
+                            )}
+
+                            {comp.compScore != null && (
+                              <div className="mt-2">
+                                <p className="font-medium">Comp Quality:</p>
+                                {isNumeric ? (
+                                  <p>{typeof comp.compScore === "number" ? comp.compScore.toFixed(2) : comp.compScore}</p>
+                                ) : (
+                                  <ul className="list-disc list-inside text-gray-700 text-sm">
+                                    {String(comp.compScore).replace(/00:00:00/g, "").split(",").map((reason, i) => (
+                                      <li key={i}>{reason.trim()}</li>
+                                    ))}
+                                  </ul>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </Popup>
+                      </Marker>
+                    );
+                  })}
+              </MapContainer>
+            </div>
+          </div>
+        )}
+      </section>
+
     </div>
     <div>
     <section className="mb-16 flex flex-col gap-5">
@@ -771,18 +710,6 @@ const PropertyDetailsPage = () => {
       Comparable Sales
     </h2>
 
-    {/* Map toggle button */}
-    <div className="flex items-center space-x-2 mb-4">
-      <Button
-        onClick={toggleMapView}
-        className="h-12 w-full text-white py-3 px-4 rounded-md hover:bg-gray-800 transition-colors duration-200"
-      >
-        <MapIcon size={18} />
-        <span>Explore Comparable Sales on Map</span>
-      </Button>
-    </div>
-    
-    {/* Map modal/viewer */}
     {showMap && (
   <Suspense
     fallback={
@@ -792,98 +719,159 @@ const PropertyDetailsPage = () => {
       </div>
     }
   >
-    <ComparableMap
-      onClose={toggleMapView}
-      property={property!}
-      comparableProperties={mapComps}
-    />
+    <section className="mb-8">
+      {property?.Latitude !== undefined && property?.Longitude !== undefined && (
+        <div className="bg-white rounded-lg shadow-lg overflow-hidden p-6">
+          <h2 className="text-xl font-bold mb-4">Comparable Sales Map View</h2>
+          <div className="w-full" style={{ height: "600px" }}>
+            <MapContainer center={[property.Latitude, property.Longitude]} zoom={12} style={{ height: "100%", width: "100%" }}>
+              <FitBounds mainProperty={{ lat: property.Latitude, lng: property.Longitude }} comparableProperties={mapComps} />
+              <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+              <Marker position={[property.Latitude, property.Longitude]} icon={mainPropertyIcon}>
+                <Popup>{property.Address}</Popup>
+              </Marker>
+              {mapComps
+                .filter((comp) => comp.lat !== undefined && comp.lng !== undefined)
+                .map((comp, index) => {
+                  const isNumeric = typeof comp.compScore === "number";
+                  const markerIcon = isNumeric ? comparablePropertyIconNumeric : comparablePropertyIcon;
+                  const detailsUrl = comp.compUrl;
+
+                  return (
+                    <Marker
+                      key={`comp-${index}`}
+                      position={[comp.lat as number, comp.lng as number]}
+                      icon={markerIcon}
+                    >
+                      <Popup>
+                        <div className="p-2 max-w-md">
+                          <h3 className={`font-bold ${isNumeric ? "text-green-600" : "text-blue-600"}`}>
+                            {detailsUrl ? (
+                              <a href={detailsUrl} target="_blank" rel="noopener noreferrer" className="underline">
+                                {comp.address}
+                              </a>
+                            ) : (
+                              comp.address
+                            )}
+                          </h3>
+
+                          {comp.dateSold && (
+                            <p><span className="font-medium">Date Sold:</span> {new Date(comp.dateSold).toLocaleDateString("en-US")}</p>
+                          )}
+
+                          {comp.price && (
+                            <p><span className="font-medium">Price:</span> ${Number(comp.price).toLocaleString()}</p>
+                          )}
+
+                          <div className="flex flex-wrap gap-2 my-2">
+                            {comp.bedrooms && <span>{comp.bedrooms} bed</span>}
+                            {comp.bathrooms && <span>{comp.bathrooms} bath</span>}
+                            {comp.sqft && <span>{comp.sqft} sqft</span>}
+                          </div>
+
+                          {comp.distance != null && (
+                            <p><span className="font-medium">Distance:</span> {typeof comp.distance === "number" ? comp.distance.toFixed(2) : comp.distance} miles</p>
+                          )}
+
+                          {comp.compScore != null && (
+                            <div className="mt-2">
+                              <p className="font-medium">Comp Quality:</p>
+                              {isNumeric ? (
+                                <p>{typeof comp.compScore === "number" ? comp.compScore.toFixed(2) : comp.compScore}</p>
+                              ) : (
+                                <ul className="list-disc list-inside text-gray-700 text-sm">
+                                  {String(comp.compScore).replace(/00:00:00/g, "").split(",").map((reason, i) => (
+                                    <li key={i}>{reason.trim()}</li>
+                                  ))}
+                                </ul>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </Popup>
+                    </Marker>
+                  );
+                })}
+            </MapContainer>
+          </div>
+        </div>
+      )}
+    </section>
   </Suspense>
 )}
 
+<div className="overflow-x-auto w-full max-w-screen-xl mx-auto">
+  <table className="min-w-full table-auto text-left text-sm divide-y divide-gray-200">
+    <thead className="bg-gray-50">
+      <tr>
+        <th className="px-4 py-2">Address</th>
+        <th className="px-4 py-2">Date Sold</th>
+        <th className="px-4 py-2">Price</th>
+        <th className="px-4 py-2">Sqft</th>
+        <th className="px-4 py-2">Bedrooms</th>
+        <th className="px-4 py-2">Bathrooms</th>
+        <th className="px-4 py-2">Distance</th>
+        <th className="px-4 py-2">Comp Quality</th>
+      </tr>
+    </thead>
+    <tbody className="bg-white divide-y divide-gray-200">
+      {allComps.map((row, idx) => (
+        <tr
+          key={row.key}
+          className={!loggedIn && idx >= 3 ? "blur-sm pointer-events-none" : ""}
+        >
+          <td className="px-4 py-2">
+            {row.compUrl ? (
+              <a
+                href={row.compUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-500 underline"
+              >
+                {row.address}
+              </a>
+            ) : (
+              row.address
+            )}
+          </td>
+          <td className="px-4 py-2">
+            {row.dateSold
+              ? new Date(row.dateSold).toLocaleDateString("en-US")
+              : "N/A"}
+          </td>
+          <td className="px-4 py-2">
+            {row.price ? `$${Number(row.price).toLocaleString()}` : "-"}
+          </td>
+          <td className="px-4 py-2">{row.sqft ?? "-"}</td>
+          <td className="px-4 py-2">{row.bedrooms ?? "-"}</td>
+          <td className="px-4 py-2">{row.bathrooms ?? "-"}</td>
+          <td className="px-4 py-2">
+            {row.distance != null ? row.distance.toFixed(2) : "-"}
+          </td>
+          <td className="px-4 py-2 align-top">
+            {typeof row.compScore === "number" ? (
+              row.compScore.toFixed(2)
+            ) : row.compScore ? (
+              <ul className="list-disc list-inside text-gray-700 text-sm">
+                {String(row.compScore)
+                  .replace(/00:00:00/g, "")
+                  .split(",")
+                  .map((reason, i) => (
+                    <li key={i}>{reason.trim()}</li>
+                  ))}
+              </ul>
+            ) : (
+              "-"
+            )}
+          </td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
 
-    {/* Table wrapper for horizontal scroll */}
-    <div className="overflow-x-auto w-full max-w-screen-xl mx-auto">
-      <table className="min-w-full table-auto text-left text-sm divide-y divide-gray-200">
-        <thead className="bg-gray-50">
-          <tr>
-            <th className="px-4 py-2">Address</th>
-            <th className="px-4 py-2">Date Sold</th>
-            <th className="px-4 py-2">Price</th>
-            <th className="px-4 py-2">Sqft</th>
-            <th className="px-4 py-2">Bedrooms</th>
-            <th className="px-4 py-2">Bathrooms</th>
-            <th className="px-4 py-2">Lot Size</th>
-            <th className="px-4 py-2">Distance</th>
-            <th className="px-4 py-2">Comp Quality</th>
-          </tr>
-        </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
-          {allComps.map((row, idx) => (
-            <tr
-              key={row.key}
-              className={!loggedIn && idx >= 3 ? "blur-sm pointer-events-none" : ""}
-            >
-              <td className="px-4 py-2">
-                {row.compUrl ? (
-                  <a
-                    href={row.compUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-500 underline"
-                  >
-                    {row.address}
-                  </a>
-                ) : (
-                  row.address
-                )}
-              </td>
-              <td className="px-4 py-2">
-                {row.dateSold
-                  ? new Date(row.dateSold).toLocaleDateString("en-US")
-                  : "N/A"}
-              </td>
-              <td className="px-4 py-2">
-                {row.price ? `$${Number(row.price).toLocaleString()}` : "-"}
-              </td>
-              <td className="px-4 py-2">{row.sqft ?? "-"}</td>
-              <td className="px-4 py-2">{row.bedrooms ?? "-"}</td>
-              <td className="px-4 py-2">{row.bathrooms ?? "-"}</td>
-              <td className="px-4 py-2">
-                {row.lotSize
-                  ? `${(Number(row.lotSize) / 43560).toFixed(2)}`
-                  : "-"}
-              </td>
-              <td className="px-4 py-2">
-                {row.distance != null ? row.distance.toFixed(2) : "-"}
-              </td>
-              <td className="px-4 py-2 align-top">
-              {typeof row.compScore === "number" ? (
-                row.compScore.toFixed(2)
-              ) : row.compScore ? (
-                <ul className="list-disc list-inside text-gray-700 text-xs">
-                  {String(row.compScore)
-                    .replace(/00:00:00/g, "")
-                    .split(",")
-                    .map((reason, i) => (
-                      <li key={i}>{reason.trim()}</li>
-                    ))}
-                </ul>
-              ) : (
-                "-"
-              )}
-            </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
 
-    {/* call-out for non-logged-in users */}
-    {!loggedIn && (
-      <div className="mt-3 text-center text-black font-bold text-4xl">
-      Log in to see the full list of comparable sales
-      </div>
-    )}
+
   </div>
 </section>
 

@@ -13,6 +13,7 @@ import StateLawPage from "./pages/StateLawPage";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import ForeclosureSkeleton from "./components/ForeclosureSkeleton";
+import "leaflet/dist/leaflet.css";
 
 const PropertyDetailsPage = lazy(() => import("./pages/PropertyDetailsPage"));
 const SavedPropertiesPage = lazy(() => import("./pages/SavedPropertiesPage"));

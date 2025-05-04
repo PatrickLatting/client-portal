@@ -17,7 +17,7 @@ export type PropertyDetails = {
   "Lender Name": string;
   "Lender Phone Number": string;
   "Borrower Name(s)": string;
-  "Law Firm Name": string;
+  "Attorney Name": string;
   "Attorney Phone Number": string;
   "Foreclosure Sale Date": string;
   "Foreclosure Sale Location": string;
@@ -35,7 +35,7 @@ export type PropertyDetails = {
   "Property Type": string;
   "Property Type.1": string;
   "Year Built": number;
-  "Lot Size": string;
+  "Lot Size": number;
   "City Region": string;
   "Living Area": string;
   "Home Warranty": number;
