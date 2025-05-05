@@ -13,7 +13,13 @@ const port = process.env.PORT || 8080;
 
 app.use(
   cors({
-    origin: [`${process.env.CLIENT_DOMAIN}`, "http://localhost:3000"],
+    origin: [
+      "https://foreclosureatlas.com",
+      "https://www.foreclosureatlas.com",
+      "https://the1416group.com",
+      "https://www.the1416group.com",
+      "http://localhost:3000"
+    ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
