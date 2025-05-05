@@ -68,26 +68,28 @@ const PropertyListingTable: React.FC<DynamicGridProps> = ({
   };
 
   const valueFormatter = (params: ValueFormatterParams, columnName: string) => {
-  if (params.value === null || params.value === undefined) return '-';
+    if (params.value === null || params.value === undefined) return '-';
 
-  if (typeof params.value === 'number') {
-    // Add special case for Year Built column
-    if (columnName === 'Year Built') {
-      return params.value.toString();
+    if (typeof params.value === 'number') {
+      // Add special case for Year Built column
+      if (columnName === 'Year Built') {
+        return params.value.toString();
+      }
+      
+      // Handle currency formatting for Zestimate, Rent Zestimate and other monetary values
+      if (
+        columnName === 'Zestimate' ||
+        columnName === 'Rent Zestimate' ||
+        columnName.includes('VALUE') ||
+        columnName.includes('AMOUNT') ||
+        columnName.includes('Principal') ||
+        columnName.includes('EQUITY') ||
+        columnName.includes('MORTGAGE')
+      ) {
+        return formatCurrency(params.value);
+      }
+      return formatNumber(params.value);
     }
-    
-    // Keep existing formatting for other numeric columns
-    if (
-      columnName.includes('VALUE') ||
-      columnName.includes('AMOUNT') ||
-      columnName.includes('Principal') ||
-      columnName.includes('EQUITY') ||
-      columnName.includes('MORTGAGE')
-    ) {
-      return formatCurrency(params.value);
-    }
-    return formatNumber(params.value);
-  }
 
     if (typeof params.value === 'boolean') {
       return params.value ? 'Yes' : 'No';

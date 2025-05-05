@@ -133,16 +133,14 @@ const PropertyListingPage = () => {
     }
   });
 
-  const [selectedOwnerOccupancy, setSelectedOwnerOccupancy] = useState<string[]>(
-    () => {
-      try {
-        const saved = localStorage.getItem("selectedOwnerOccupancy");
-        return saved ? JSON.parse(saved) : [];
-      } catch {
-        return [];
-      }
+  const [selectedOwnerOccupancy, setSelectedOwnerOccupancy] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem("selectedOwnerOccupancy");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
     }
-  );
+  });
 
   const [selectedYearBuilt, setSelectedYearBuilt] = useState<{
     from?: string;
@@ -202,6 +200,13 @@ const PropertyListingPage = () => {
     return async () => {
       setLoading(true);
       try {
+        console.log('Filter values before API call:', {
+          estimatedFrom: selectedEstimatedValue.from,
+          estimatedTo: selectedEstimatedValue.to,
+          parsedFrom: selectedEstimatedValue.from ? parseFloat(selectedEstimatedValue.from) : undefined,
+          parsedTo: selectedEstimatedValue.to ? parseFloat(selectedEstimatedValue.to) : undefined
+        });
+
         const queryParams = new URLSearchParams({
           search: debouncedSearch,
           page: currentPage.toString(),
@@ -219,7 +224,15 @@ const PropertyListingPage = () => {
           ...(sortParams && sortParams.colId && sortParams.sort && { sortColumn: sortParams.colId, sortDirection: sortParams.sort }),
         });
 
+        console.log('Full API Request URL:', `${process.env.REACT_APP_API_BASE_URL}/get-properties?${queryParams}`);
+
         const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/get-properties?${queryParams}`);
+
+        console.log('API Response:', {
+          totalProperties: res.data.data.length,
+          totalPages: res.data.meta.totalPages,
+          sampleProperty: res.data.data[0]
+        });
 
         setProperties(res.data.data);
         setTotalPages(res.data.meta.totalPages);
@@ -727,19 +740,26 @@ const PropertyListingPage = () => {
               <div className="flex flex-row">
                 <Input
                   onChange={(e) => {
-                    setSelectedYearBuilt((prevState) => ({
-                      ...prevState,
-                      from: e.target.value || "",
-                    }));
+                    const value = e.target.value;
+                    const numValue = value ? parseInt(value) : undefined;
+                    console.log('Year Built From change:', { value, numValue });
+                    setSelectedYearBuilt((prevState) => {
+                      const newState = {
+                        ...prevState,
+                        from: value || undefined
+                      };
+                      console.log('New Year Built state:', newState);
+                      return newState;
+                    });
                     localStorage.setItem(
                       "selectedYearBuilt",
                       JSON.stringify({
                         ...selectedYearBuilt,
-                        from: e.target.value || "",
+                        from: value || undefined
                       })
                     );
                   }}
-                  value={selectedYearBuilt.from}
+                  value={selectedYearBuilt.from || ""}
                   type="number"
                   placeholder="E.g 1996"
                   max={2100}
@@ -748,19 +768,26 @@ const PropertyListingPage = () => {
                 <div className="p-1 font-bold">-</div>
                 <Input
                   onChange={(e) => {
-                    setSelectedYearBuilt((prevState) => ({
-                      ...prevState,
-                      to: e.target.value || "",
-                    }));
+                    const value = e.target.value;
+                    const numValue = value ? parseInt(value) : undefined;
+                    console.log('Year Built To change:', { value, numValue });
+                    setSelectedYearBuilt((prevState) => {
+                      const newState = {
+                        ...prevState,
+                        to: value || undefined
+                      };
+                      console.log('New Year Built state:', newState);
+                      return newState;
+                    });
                     localStorage.setItem(
                       "selectedYearBuilt",
                       JSON.stringify({
                         ...selectedYearBuilt,
-                        to: e.target.value || "",
+                        to: value || undefined
                       })
                     );
                   }}
-                  value={selectedYearBuilt.to}
+                  value={selectedYearBuilt.to || ""}
                   type="number"
                   placeholder="E.g 2015"
                   max={2100}
@@ -773,12 +800,18 @@ const PropertyListingPage = () => {
               <div className="flex flex-row">
                 <Input
                   onChange={(e) => {
-                    const newValue = e.target.value;
+                    const value = e.target.value;
+                    console.log('Estimated Value From change:', { 
+                      value, 
+                      type: typeof value,
+                      parsedValue: value ? parseFloat(value) : undefined 
+                    });
                     setSelectedEstimatedValue((prevState) => {
                       const newState = {
                         ...prevState,
-                        from: newValue || undefined,
+                        from: value || undefined,
                       };
+                      console.log('New Estimated Value state:', newState);
                       localStorage.setItem(
                         "selectedEstimatedValue",
                         JSON.stringify(newState)
@@ -793,12 +826,18 @@ const PropertyListingPage = () => {
                 <div className="p-1 font-bold">-</div>
                 <Input
                   onChange={(e) => {
-                    const newValue = e.target.value;
+                    const value = e.target.value;
+                    console.log('Estimated Value To change:', { 
+                      value, 
+                      type: typeof value,
+                      parsedValue: value ? parseFloat(value) : undefined 
+                    });
                     setSelectedEstimatedValue((prevState) => {
                       const newState = {
                         ...prevState,
-                        to: newValue || undefined,
+                        to: value || undefined,
                       };
+                      console.log('New Estimated Value state:', newState);
                       localStorage.setItem(
                         "selectedEstimatedValue",
                         JSON.stringify(newState)

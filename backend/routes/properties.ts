@@ -19,6 +19,28 @@ propertiesRouter.get("/get-properties", async (req: Request, res: Response) => {
     const ownerType = (req.query.ownerType as string) || "";
     const state = (req.query.state as string) || "";
     const selectedSaleDates = (req.query.saleDates as string) || "";
+    const yearBuiltFrom = req.query.yearBuiltFrom ? parseInt(req.query.yearBuiltFrom as string) : undefined;
+    const yearBuiltTo = req.query.yearBuiltTo ? parseInt(req.query.yearBuiltTo as string) : undefined;
+    const estimatedFrom = req.query.estimatedFrom ? parseFloat(req.query.estimatedFrom as string) : undefined;
+    const estimatedTo = req.query.estimatedTo ? parseFloat(req.query.estimatedTo as string) : undefined;
+
+    console.log('Received numeric filters:', {
+      yearBuiltFrom,
+      yearBuiltTo,
+      estimatedFrom,
+      estimatedTo
+    });
+
+    console.log('Received Estimated Value filter params:', {
+      raw: {
+        from: req.query.estimatedFrom,
+        to: req.query.estimatedTo
+      },
+      parsed: {
+        from: estimatedFrom,
+        to: estimatedTo
+      }
+    });
 
     const filter: any = {};
 
@@ -39,6 +61,34 @@ propertiesRouter.get("/get-properties", async (req: Request, res: Response) => {
       const states = state.split(",").map((item) => item.trim());
       filter.State = { $in: states };
     }
+
+    // Year Built filter
+    if (yearBuiltFrom !== undefined || yearBuiltTo !== undefined) {
+      filter["Year Built"] = {};
+      if (yearBuiltFrom !== undefined) {
+        filter["Year Built"].$gte = yearBuiltFrom;
+      }
+      if (yearBuiltTo !== undefined) {
+        filter["Year Built"].$lte = yearBuiltTo;
+      }
+    }
+
+    // Estimated Value filter using Zestimate field
+    if (estimatedFrom !== undefined || estimatedTo !== undefined) {
+      filter["Zestimate"] = {};
+      if (estimatedFrom !== undefined) {
+        filter["Zestimate"].$gte = estimatedFrom;
+        console.log('Added Zestimate from filter:', { gte: estimatedFrom });
+      }
+      if (estimatedTo !== undefined) {
+        filter["Zestimate"].$lte = estimatedTo;
+        console.log('Added Zestimate to filter:', { lte: estimatedTo });
+      }
+      console.log('Final Zestimate filter:', filter["Zestimate"]);
+    }
+
+    console.log('Final MongoDB filter for Estimated Value:', filter["Zestimate"]);
+    console.log('Final MongoDB filter:', JSON.stringify(filter, null, 2));
 
     // Fetch filtered properties and all possible filter options
     const [properties, total, allSaleDates, allCounties, allPropertyTypes, allStates] = await Promise.all([
@@ -232,7 +282,7 @@ propertiesRouter.get("/get-all-map-properties", async (req: Request, res: Respon
     const mapProperties = properties.map((prop: {
       _id: any; Address: any; State: any; County: any; LAND_USE: any;
       "Foreclosure Sale Date": any; PRINCIPAL_AMOUNT: any; Latitude: any; Longitude: any;
-      ESTIMATED_VALUE: any; RENT_ZESTIMATE: any; SQUARE_FEET: any;
+      Zestimate: any; RENT_ZESTIMATE: any; SQUARE_FEET: any;
       BEDROOMS: any; BATHROOMS: any; "Year Built": any;
       OWNER_OCCUPANCY: any; OWNERSHIP_TYPE: any;
     }) => ({
@@ -245,7 +295,7 @@ propertiesRouter.get("/get-all-map-properties", async (req: Request, res: Respon
       "Principal Amount Owed": prop.PRINCIPAL_AMOUNT,
       Latitude: prop.Latitude,
       Longitude: prop.Longitude,
-      Zestimate: prop.ESTIMATED_VALUE,
+      Zestimate: prop.Zestimate,
       "Rent Zestimate": prop.RENT_ZESTIMATE,
       "Living Area (sq ft)": prop.SQUARE_FEET,
       Bedrooms: prop.BEDROOMS,
