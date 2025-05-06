@@ -575,7 +575,7 @@ const PropertyListingPage = () => {
           <Button
             onClick={toggleMapView}
             disabled={mapLoading}
-            className="h-12 w-full text-white py-3 px-4 rounded-md hover:bg-gray-800 transition-colors duration-200"
+            className="hidden md:flex h-12 w-full text-white py-3 px-4 rounded-md hover:bg-gray-800 transition-colors duration-200"
           >
             {mapLoading ? (
               <>
