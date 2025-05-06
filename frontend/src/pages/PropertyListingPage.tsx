@@ -600,7 +600,7 @@ const PropertyListingPage = () => {
             <Input
               type="text"
               className="h-12 placeholder:text-gray-500 font-medium"
-              placeholder="Search by county or address"
+              placeholder="Search by address"
               value={searchInput}
               onChange={handleSearch}
             />

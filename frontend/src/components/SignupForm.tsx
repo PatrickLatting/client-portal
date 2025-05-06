@@ -24,8 +24,6 @@ function SignupForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
   const [name, setName] = useState("");
   const [organization, setOrganization] = useState("");
   const [occupation, setOccupation] = useState("");
@@ -43,12 +41,10 @@ function SignupForm({
       await axios.post(
         `${process.env.REACT_APP_API_BASE_URL}/signup`,
         {
-          firstName,
-          lastName,
-          name: `${firstName} ${lastName}`,
+          name,
           organization,
-          occupation: occupation.toLowerCase(),
-          other: ifOther,
+          occupation,
+          ifOther,
           emailId,
           howDidYouHearAboutUs,
           password,
@@ -106,18 +102,10 @@ function SignupForm({
           <form>
             <div className="flex flex-col gap-6">
               <InputField
-                label="First Name *"
+                label="Name *"
                 type="text"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                required
-              />
-
-              <InputField
-                label="Last Name *"
-                type="text"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
                 required
               />
 
@@ -128,27 +116,31 @@ function SignupForm({
                 onChange={(e) => setOrganization(e.target.value)}
               />
 
-              <Select
-                onValueChange={(e) => setOccupation(e)}
-                value={occupation}
-              >
-                <SelectTrigger className="mt-0">
-                  <SelectValue placeholder="What do you do? *" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Investor">Investor</SelectItem>
-                  <SelectItem value="Wholesaler">Wholesaler</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
-                </SelectContent>
-              </Select>
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  What do you do? *
+                </label>
+                <Select onValueChange={setOccupation} value={occupation} required>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select an option" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Investor">Investor</SelectItem>
+                    <SelectItem value="Wholesaler">Wholesaler</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-              <InputField
-                label="If 'Other', what?"
-                type="text"
-                value={ifOther}
-                onChange={(e) => setIfOther(e.target.value)}
-                required={occupation === "other"} // Required only if "other" is selected
-              />
+              {occupation === "Other" && (
+                <InputField
+                  label="If 'Other', what?"
+                  type="text"
+                  value={ifOther}
+                  onChange={(e) => setIfOther(e.target.value)}
+                  required
+                />
+              )}
 
               <InputField
                 label="What is your email address? *"

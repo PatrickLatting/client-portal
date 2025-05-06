@@ -44,6 +44,14 @@ propertiesRouter.get("/get-properties", async (req: Request, res: Response) => {
 
     const filter: any = {};
 
+    // Handle search query
+    if (search && search !== "") {
+      filter.$or = [
+        { Address: { $regex: search, $options: "i" } },
+      ];
+      console.log('Search filter applied:', filter.$or);
+    }
+
     // Apply filters
     if (selectedSaleDates) {
       const saleDatesArray = selectedSaleDates.split(",").map((date) => date.trim());

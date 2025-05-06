@@ -15,8 +15,7 @@ authRouter.post(
     try {
       validateSignUpData(req);
       const {
-        firstName,
-        lastName,
+        name,
         organization,
         emailId,
         occupation,
@@ -34,8 +33,7 @@ authRouter.post(
       const passwordHash = await bcrypt.hash(password, 10);
 
       const user = new User({
-        firstName,
-        lastName,
+        name,
         organization,
         emailId,
         occupation: occupation.toLowerCase(),

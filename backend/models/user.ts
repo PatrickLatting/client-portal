@@ -47,9 +47,8 @@ const userSchema: Schema<IUser> = new Schema<IUser>(
     occupation: {
       type: String,
       enum: [
-        "broker",
-        "institutional investor",
-        "professional flipper",
+        "investor",
+        "wholesaler",
         "other",
       ],
       required: true,
