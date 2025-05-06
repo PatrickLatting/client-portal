@@ -443,17 +443,18 @@ const PropertyDetailsPage = () => {
           <h2 className="text-xl md:text-2xl font-semibold mb-4">
             Foreclosure Details
           </h2>
-          <div className="grid grid-cols-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {foreclosureDetailsSection.map((item, index) => {
-              const isLastColumn = (index + 1) % 4 === 0;
               const shouldBlur = item.blurIfLoggedOut && !loggedIn;
 
               return (
                 <div
                   key={index}
-                  className={`p-4 ${!isLastColumn ? "border-r border-gray-300" : ""}`}
+                  className="p-4 bg-white rounded-lg border border-gray-200 shadow-sm"
                 >
-                  <div className="font-medium text-blue-900">{item.label}</div>
+                  <div className="font-medium text-blue-900 mb-1.5">
+                    {item.label}
+                  </div>
                   <div className={`text-gray-700 ${shouldBlur ? "blur-sm" : ""}`}>
                     {item.value || "-"}
                   </div>
