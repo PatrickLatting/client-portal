@@ -9,7 +9,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useToast } from "../hooks/use-toast";
 import { useUser } from "../hooks/useUser";
-import logo from "../assets/1914Logo.png";
+import logo from "../assets/ForeclosureAtlasLongLogo.png";
 
 export function LoginForm({
   className,
@@ -70,7 +70,7 @@ export function LoginForm({
           <div className="w-56 mx-auto my-10">
             <img src={logo} alt="" />
           </div>
-          <CardTitle className="text-2xl text-center">Client Portal</CardTitle>
+          <CardTitle className="text-2xl text-center">Log In</CardTitle>
         </CardHeader>
         <CardContent>
           <form>

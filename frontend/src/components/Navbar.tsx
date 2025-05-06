@@ -23,7 +23,7 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import { useUser } from "../hooks/useUser";
-import logo from "../assets/1914Logo.png";
+import logo from "../assets/ForeclosureAtlasLongLogo.png"
 
 export default function Component() {
   const { loggedIn, setUser, setLoggedIn, user } = useUser();
@@ -95,7 +95,7 @@ export default function Component() {
                 className="mr-6"
                 onClick={() => setIsSheetOpen(false)}
               >
-                <img src={logo} alt="logo" className="w-[160px]" />
+                <img src={logo} alt="logo" className="w-[300px] h-auto" />
               </Link>
             </div>
             {/* Mobile menu items */}
@@ -163,7 +163,7 @@ export default function Component() {
 
         {/* Desktop Logo */}
         <Link to="/" className="mr-6 lg:flex w-40">
-          <img src={logo} alt="logo" />
+          <img src={logo} alt="logo" className="w-[900px] h-auto" />
         </Link>
       </div>
 
