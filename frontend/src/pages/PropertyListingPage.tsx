@@ -714,6 +714,7 @@ const PropertyListingPage = () => {
               />
             </Suspense>
             
+            {/* Temporarily disabled sale date filter
             <Suspense fallback={<Skeleton className="h-12" />}>
               <MultiSelector
                 options={allSaleDates.map((date) => ({ label: date, value: date }))}
@@ -723,6 +724,7 @@ const PropertyListingPage = () => {
                 buttonWidth="w-full"
               />
             </Suspense>
+            */}
             
             <Suspense fallback={<Skeleton className="h-12" />}>
               <MultiSelector

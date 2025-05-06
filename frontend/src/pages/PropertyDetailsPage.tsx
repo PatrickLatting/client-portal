@@ -58,20 +58,20 @@ const PropertyDetailsPage = () => {
   const propertyDetailsSection = useMemo(() => {
     if (!property) return [];
     return [
-      { label: "Zestimate", value: property["Zestimate"] },
-      { label: "Rent Zestimate", value: (property as any)["Rent Zestimate"] },
+      { label: "Zestimate", value: property["Zestimate"] ? `$${Number(property["Zestimate"]).toLocaleString()}` : null },
+      { label: "Rent Zestimate", value: property["Rent Zestimate"] ? `$${Number(property["Rent Zestimate"]).toLocaleString()}` : null },
       { label: "Bedrooms", value: property.Bedrooms },
       { label: "Bathrooms", value: property.Bathrooms },
       { label: "Square Feet", value: property["Living Area (sq ft)"] },
       { label: "Lot Size", value: property["Lot Size"] },
       { label: "Year Built", value: property["Year Built"] },
-      
-      { label: "Owner Name", value: (property as any)["Borrower Name(s)"] },
-      
+      { label: "Property Type", value: property["Property Type"] },
+      { label: "Owner Name", value: property["Borrower Name(s)"] },
+      { label: "Law Firm", value: property["Attorney Name"] },
+      { label: "County", value: property["County"] },
+      { label: "Property Type", value: property["Property Type"] },
     ];
   }, [property]);
-
-  
 
   const foreclosureDetailsSection = useMemo(() => {
     if (!property) return [];
@@ -79,11 +79,16 @@ const PropertyDetailsPage = () => {
       { label: "Foreclosure Status", value: (property as any)["matched_Foreclosure Status"], blurIfLoggedOut: true },
       { label: "Opening Bid", value: (property as any)["matched_Current Bid"], blurIfLoggedOut: true },
       { label: "Auction Date", value: (property as any)["Foreclosure Sale Date"] },
-      { label: "Original Debt Amount", value: (property as any)["Principal Amount Owed"] },
-      { label: "Lender Name", value: (property as any)["Lender Name"] },
-      { label: "Attorney Phone Number", value: (property as any)["Attorney Phone Number"] },
       { label: "Foreclosure Sale Location", value: (property as any)["Foreclosure Sale Location"] },
+      { label: "Lender Name", value: (property as any)["Lender Name"] },
+      { label: "Lender Phone Number", value: (property as any)["Lender Phone Number"] },
+      { label: "Attorney Name", value: (property as any)["Attorney Name"] },
+      { label: "Attorney Phone Number", value: (property as any)["Attorney Phone Number"] },
+      { label: "Original Debt Amount", value: (property as any)["Principal Amount Owed"] ? `$${Number(property["Principal Amount Owed"]).toLocaleString()}` : null },
       { label: "Loan Origination Date", value: (property as any)["Date of Debt"] },
+
+      
+      
     ];
   }, [property]);
 
@@ -455,8 +460,8 @@ const PropertyDetailsPage = () => {
                   <div className="font-medium text-blue-900 mb-1.5">
                     {item.label}
                   </div>
-                  <div className={`text-gray-700 ${shouldBlur ? "blur-sm" : ""}`}>
-                    {item.value || "-"}
+                  <div className="text-gray-700">
+                    {shouldBlur ? `Log in to view ${item.label} data` : (item.value || "-")}
                   </div>
                 </div>
               );
@@ -595,17 +600,15 @@ const PropertyDetailsPage = () => {
               <td className="px-4 py-2">Zillow rent valuation</td>
               <td className="px-4 py-2">
                 {property?.["Zillow rent valuation"] !== undefined
-                  ? `$${Number(property["Rent Zestimate"]).toLocaleString()}`
-                  : " - "}
+                  ? `$${Number(property["Zillow rent valuation"]).toLocaleString()}`
+                  : "N/A"}
               </td>
             </tr>
             <tr className="border-b border-gray-200">
               <td className="px-4 py-2">Zillow low estimate</td>
               <td className="px-4 py-2">
                 {property?.["Zillow low estimate"] !== undefined
-                  ? `$${Number(
-                    property["Zillow low estimate"]
-                  ).toLocaleString()}`
+                  ? `$${Number(property["Zillow low estimate"]).toLocaleString()}`
                   : "N/A"}
               </td>
             </tr>
@@ -613,9 +616,7 @@ const PropertyDetailsPage = () => {
               <td className="px-4 py-2">Zillow high estimate</td>
               <td className="px-4 py-2">
                 {property?.["Zillow high estimate"] !== undefined
-                  ? `$${Number(
-                    property["Zillow high estimate"]
-                  ).toLocaleString()}`
+                  ? `$${Number(property["Zillow high estimate"]).toLocaleString()}`
                   : "N/A"}
               </td>
             </tr>
@@ -707,9 +708,14 @@ const PropertyDetailsPage = () => {
     <div>
     <section className="mb-16 flex flex-col gap-5">
     <div className="border p-6 bg-white rounded-lg shadow-lg w-full max-w-screen-xl mx-auto" style={{ width: '1500px' }}>
-    <h2 className="text-xl md:text-2xl font-semibold mb-4">
+    <h2 className="text-xl md:text-2xl font-semibold mb-2">
       Comparable Sales
     </h2>
+    {property?.Comp_quality_score && (
+      <div className="text-gray-600 mb-4">
+        Average Comp Quality Score: {property.Comp_quality_score.toFixed(2)}
+      </div>
+    )}
 
     {showMap && (
   <Suspense
@@ -748,7 +754,12 @@ const PropertyDetailsPage = () => {
                         <div className="p-2 max-w-md">
                           <h3 className={`font-bold ${isNumeric ? "text-green-600" : "text-blue-600"}`}>
                             {detailsUrl ? (
-                              <a href={detailsUrl} target="_blank" rel="noopener noreferrer" className="underline">
+                              <a
+                                href={detailsUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="underline"
+                              >
                                 {comp.address}
                               </a>
                             ) : (

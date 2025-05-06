@@ -51,6 +51,7 @@ export type PropertyDetails = {
   "Latitude": number;
   "Zestimate High Percent": number;
   "matched_Foreclosure Status": string;
+  "Comp_quality_score": number;
 
   //Tax
   TAX_HISTORY_TIME_1: number;
