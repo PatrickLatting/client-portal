@@ -24,6 +24,8 @@ function SignupForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [name, setName] = useState("");
   const [organization, setOrganization] = useState("");
   const [occupation, setOccupation] = useState("");
@@ -31,6 +33,7 @@ function SignupForm({
   const [emailId, setEmailId] = useState("");
   const [howDidYouHearAboutUs, setHowDidYouHearAboutUs] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -40,7 +43,9 @@ function SignupForm({
       await axios.post(
         `${process.env.REACT_APP_API_BASE_URL}/signup`,
         {
-          name,
+          firstName,
+          lastName,
+          name: `${firstName} ${lastName}`,
           organization,
           occupation: occupation.toLowerCase(),
           other: ifOther,
@@ -94,17 +99,25 @@ function SignupForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader className="text-center">
-          <CardTitle className="text-4xl">Tell us about You</CardTitle>
-          <CardDescription>We'll be in contact shortly.</CardDescription>
+          <CardTitle className="text-4xl">Sign Up</CardTitle>
+          <CardDescription>We don't sell data, we just want to make the platform as good as we can!</CardDescription>
         </CardHeader>
         <CardContent>
           <form>
             <div className="flex flex-col gap-6">
               <InputField
-                label="Name *"
+                label="First Name *"
                 type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                required
+              />
+
+              <InputField
+                label="Last Name *"
+                type="text"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
                 required
               />
 
@@ -123,14 +136,9 @@ function SignupForm({
                   <SelectValue placeholder="What do you do? *" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Broker">Broker</SelectItem>
-                  <SelectItem value="Institutional Investor">
-                    Institutional Investor
-                  </SelectItem>
-                  <SelectItem value="Professional Flipper">
-                    Professional Flipper
-                  </SelectItem>
-                  <SelectItem value="other">other</SelectItem>
+                  <SelectItem value="Investor">Investor</SelectItem>
+                  <SelectItem value="Wholesaler">Wholesaler</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -143,7 +151,7 @@ function SignupForm({
               />
 
               <InputField
-                label="What's the best email to follow up with? *"
+                label="What is your email address? *"
                 type="email"
                 value={emailId}
                 onChange={(e) => setEmailId(e.target.value)}
@@ -165,6 +173,14 @@ function SignupForm({
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 showPassword={false}
+              />
+
+              <InputField
+                label="Confirm Password *"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
               />
 
               <Button

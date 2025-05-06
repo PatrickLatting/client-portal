@@ -194,24 +194,26 @@ const PropertyListingMap: React.FC<{
                       ]}
                     >
                       {/* Tooltip shown on hover */}
-                      <Tooltip direction="top" offset={[0, -20]} opacity={1}>
-                        <div>
-                          <h3 className="font-bold">{property.Address}</h3>
-                          <p>
-                            {property.State || ""}, {property.County || ""}
-                          </p>
-                          <p>{property["Property Type"] || ""}</p>
-                          <p>
-                            $
-                            {property.Zestimate
-                              ? Number(property.Zestimate).toLocaleString()
-                              : "N/A"}
-                          </p>
-                        </div>
-                      </Tooltip>
+                      {!('ontouchstart' in window) && (
+                        <Tooltip direction="top" offset={[0, -20]} opacity={1}>
+                          <div>
+                            <h3 className="font-bold">{property.Address}</h3>
+                            <p>
+                              {property.State || ""}, {property.County || ""}
+                            </p>
+                            <p>{property["Property Type"] || ""}</p>
+                            <p>
+                              $
+                              {property.Zestimate
+                                ? Number(property.Zestimate).toLocaleString()
+                                : "N/A"}
+                            </p>
+                          </div>
+                        </Tooltip>
+                      )}
 
                       {/* Popup shown on click */}
-                      <Popup>
+                      <Popup autoClose={false} closeOnClick={false}>
                         <div className="property-popup">
                           <h3 className="font-bold text-lg">{property.Address}</h3>
                           <div className="grid grid-cols-2 gap-2 my-2">

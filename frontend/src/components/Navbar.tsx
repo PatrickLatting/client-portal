@@ -162,7 +162,7 @@ export default function Component() {
         </Sheet>
 
         {/* Desktop Logo */}
-        <Link to="/" className="mr-6 lg:flex w-40">
+        <Link to="/" className="mr-6 lg:flex w-[300px] h-auto hidden">
           <img src={logo} alt="logo" className="w-[900px] h-auto" />
         </Link>
       </div>
