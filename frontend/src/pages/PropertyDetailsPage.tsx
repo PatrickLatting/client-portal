@@ -14,7 +14,7 @@ import PropertyActions from "../components/propertyDetails/PropertyActions";
 import { Button } from "../components/ui/button";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, Tooltip, useMap } from "react-leaflet";
 
 const PropertyDetailsPage = () => {
   const [property, setProperty] = useState<PropertyDetails | null>(null);
@@ -648,53 +648,67 @@ const PropertyDetailsPage = () => {
                         key={`comp-${index}`}
                         position={[comp.lat as number, comp.lng as number]}
                         icon={markerIcon}
+                        eventHandlers={{
+                          click: (e) => {
+                            // On mobile, show tooltip instead of popup
+                            if (window.innerWidth < 768) {
+                              e.target.openTooltip();
+                              setTimeout(() => e.target.closeTooltip(), 3000);
+                            }
+                          }
+                        }}
                       >
-                        <Popup>
-                          <div className="p-2 max-w-md">
-                            <h3 className={`font-bold ${isNumeric ? "text-green-600" : "text-blue-600"}`}>
-                              {detailsUrl ? (
-                                <a href={detailsUrl} target="_blank" rel="noopener noreferrer" className="underline">
-                                  {comp.address}
-                                </a>
-                              ) : (
-                                comp.address
-                              )}
-                            </h3>
-
-                            {comp.dateSold && (
-                              <p><span className="font-medium">Date Sold:</span> {new Date(comp.dateSold).toLocaleDateString("en-US")}</p>
-                            )}
-
-                            {comp.price && (
-                              <p><span className="font-medium">Price:</span> ${Number(comp.price).toLocaleString()}</p>
-                            )}
-
-                            <div className="flex flex-wrap gap-2 my-2">
-                              {comp.bedrooms && <span>{comp.bedrooms} bed</span>}
-                              {comp.bathrooms && <span>{comp.bathrooms} bath</span>}
-                              {comp.sqft && <span>{comp.sqft} sqft</span>}
+                        {window.innerWidth < 768 ? (
+                          <Tooltip>
+                            <div>
+                              <strong>{comp.address}</strong><br />
+                              {comp.price && `$${Number(comp.price).toLocaleString()}`}<br />
+                              {comp.bedrooms && comp.bathrooms && `${comp.bedrooms} bed, ${comp.bathrooms} bath`}
                             </div>
-
-                            {comp.distance != null && (
-                              <p><span className="font-medium">Distance:</span> {typeof comp.distance === "number" ? comp.distance.toFixed(2) : comp.distance} miles</p>
-                            )}
-
-                            {comp.compScore != null && (
-                              <div className="mt-2">
-                                <p className="font-medium">Comp Quality:</p>
-                                {isNumeric ? (
-                                  <p>{typeof comp.compScore === "number" ? comp.compScore.toFixed(2) : comp.compScore}</p>
+                          </Tooltip>
+                        ) : (
+                          <Popup>
+                            <div className="p-2 max-w-md">
+                              <h3 className={`font-bold ${isNumeric ? "text-green-600" : "text-blue-600"}`}>
+                                {detailsUrl ? (
+                                  <a href={detailsUrl} target="_blank" rel="noopener noreferrer" className="underline">
+                                    {comp.address}
+                                  </a>
                                 ) : (
-                                  <ul className="list-disc list-inside text-gray-700 text-sm">
-                                    {String(comp.compScore).replace(/00:00:00/g, "").split(",").map((reason, i) => (
-                                      <li key={i}>{reason.trim()}</li>
-                                    ))}
-                                  </ul>
+                                  comp.address
                                 )}
+                              </h3>
+                              {comp.dateSold && (
+                                <p><span className="font-medium">Date Sold:</span> {new Date(comp.dateSold).toLocaleDateString("en-US")}</p>
+                              )}
+                              {comp.price && (
+                                <p><span className="font-medium">Price:</span> ${Number(comp.price).toLocaleString()}</p>
+                              )}
+                              <div className="flex flex-wrap gap-2 my-2">
+                                {comp.bedrooms && <span>{comp.bedrooms} bed</span>}
+                                {comp.bathrooms && <span>{comp.bathrooms} bath</span>}
+                                {comp.sqft && <span>{comp.sqft} sqft</span>}
                               </div>
-                            )}
-                          </div>
-                        </Popup>
+                              {comp.distance != null && (
+                                <p><span className="font-medium">Distance:</span> {typeof comp.distance === "number" ? comp.distance.toFixed(2) : comp.distance} miles</p>
+                              )}
+                              {comp.compScore != null && (
+                                <div className="mt-2">
+                                  <p className="font-medium">Comp Quality:</p>
+                                  {isNumeric ? (
+                                    <p>{typeof comp.compScore === "number" ? comp.compScore.toFixed(2) : comp.compScore}</p>
+                                  ) : (
+                                    <ul className="list-disc list-inside text-gray-700 text-sm">
+                                      {String(comp.compScore).replace(/00:00:00/g, "").split(",").map((reason, i) => (
+                                        <li key={i}>{reason.trim()}</li>
+                                      ))}
+                                    </ul>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </Popup>
+                        )}
                       </Marker>
                     );
                   })}
@@ -749,58 +763,77 @@ const PropertyDetailsPage = () => {
                       key={`comp-${index}`}
                       position={[comp.lat as number, comp.lng as number]}
                       icon={markerIcon}
+                      eventHandlers={{
+                        click: (e) => {
+                          // On mobile, show tooltip instead of popup
+                          if (window.innerWidth < 768) {
+                            e.target.openTooltip();
+                            setTimeout(() => e.target.closeTooltip(), 3000);
+                          }
+                        }
+                      }}
                     >
-                      <Popup>
-                        <div className="p-2 max-w-md">
-                          <h3 className={`font-bold ${isNumeric ? "text-green-600" : "text-blue-600"}`}>
-                            {detailsUrl ? (
-                              <a
-                                href={detailsUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="underline"
-                              >
-                                {comp.address}
-                              </a>
-                            ) : (
-                              comp.address
-                            )}
-                          </h3>
-
-                          {comp.dateSold && (
-                            <p><span className="font-medium">Date Sold:</span> {new Date(comp.dateSold).toLocaleDateString("en-US")}</p>
-                          )}
-
-                          {comp.price && (
-                            <p><span className="font-medium">Price:</span> ${Number(comp.price).toLocaleString()}</p>
-                          )}
-
-                          <div className="flex flex-wrap gap-2 my-2">
-                            {comp.bedrooms && <span>{comp.bedrooms} bed</span>}
-                            {comp.bathrooms && <span>{comp.bathrooms} bath</span>}
-                            {comp.sqft && <span>{comp.sqft} sqft</span>}
+                      {window.innerWidth < 768 ? (
+                        <Tooltip>
+                          <div>
+                            <strong>{comp.address}</strong><br />
+                            {comp.price && `$${Number(comp.price).toLocaleString()}`}<br />
+                            {comp.bedrooms && comp.bathrooms && `${comp.bedrooms} bed, ${comp.bathrooms} bath`}
                           </div>
-
-                          {comp.distance != null && (
-                            <p><span className="font-medium">Distance:</span> {typeof comp.distance === "number" ? comp.distance.toFixed(2) : comp.distance} miles</p>
-                          )}
-
-                          {comp.compScore != null && (
-                            <div className="mt-2">
-                              <p className="font-medium">Comp Quality:</p>
-                              {isNumeric ? (
-                                <p>{typeof comp.compScore === "number" ? comp.compScore.toFixed(2) : comp.compScore}</p>
+                        </Tooltip>
+                      ) : (
+                        <Popup>
+                          <div className="p-2 max-w-md">
+                            <h3 className={`font-bold ${isNumeric ? "text-green-600" : "text-blue-600"}`}>
+                              {detailsUrl ? (
+                                <a
+                                  href={detailsUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="underline"
+                                >
+                                  {comp.address}
+                                </a>
                               ) : (
-                                <ul className="list-disc list-inside text-gray-700 text-sm">
-                                  {String(comp.compScore).replace(/00:00:00/g, "").split(",").map((reason, i) => (
-                                    <li key={i}>{reason.trim()}</li>
-                                  ))}
-                                </ul>
+                                comp.address
                               )}
+                            </h3>
+
+                            {comp.dateSold && (
+                              <p><span className="font-medium">Date Sold:</span> {new Date(comp.dateSold).toLocaleDateString("en-US")}</p>
+                            )}
+
+                            {comp.price && (
+                              <p><span className="font-medium">Price:</span> ${Number(comp.price).toLocaleString()}</p>
+                            )}
+
+                            <div className="flex flex-wrap gap-2 my-2">
+                              {comp.bedrooms && <span>{comp.bedrooms} bed</span>}
+                              {comp.bathrooms && <span>{comp.bathrooms} bath</span>}
+                              {comp.sqft && <span>{comp.sqft} sqft</span>}
                             </div>
-                          )}
-                        </div>
-                      </Popup>
+
+                            {comp.distance != null && (
+                              <p><span className="font-medium">Distance:</span> {typeof comp.distance === "number" ? comp.distance.toFixed(2) : comp.distance} miles</p>
+                            )}
+
+                            {comp.compScore != null && (
+                              <div className="mt-2">
+                                <p className="font-medium">Comp Quality:</p>
+                                {isNumeric ? (
+                                  <p>{typeof comp.compScore === "number" ? comp.compScore.toFixed(2) : comp.compScore}</p>
+                                ) : (
+                                  <ul className="list-disc list-inside text-gray-700 text-sm">
+                                    {String(comp.compScore).replace(/00:00:00/g, "").split(",").map((reason, i) => (
+                                      <li key={i}>{reason.trim()}</li>
+                                    ))}
+                                  </ul>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </Popup>
+                      )}
                     </Marker>
                   );
                 })}
